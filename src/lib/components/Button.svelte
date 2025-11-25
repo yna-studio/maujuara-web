@@ -1,0 +1,31 @@
+<script lang="ts">
+	export let text: string;
+	export let type: 'button' | 'link' = 'button';
+	export let variant: 'large' | 'medium' = 'medium';
+	export let size: 'full' | 'auto' = 'auto';
+	export let href = '#';
+
+	const baseClasses =
+		'inline-flex items-center gap-2 rounded-full bg-red-600 text-white font-semibold shadow-lg transition-all duration-200 hover:bg-red-700 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500';
+
+	const variantClasses =
+		variant === 'large'
+			? 'text-lg px-8 py-4'
+			: 'text-base px-6 py-3';
+
+	const sizeClasses = size === 'full' ? 'w-full justify-center' : 'w-auto';
+
+	const classes = `${baseClasses} ${variantClasses} ${sizeClasses}`;
+</script>
+
+{#if type === 'link'}
+	<a href={href} class={classes}>
+		{text}
+	</a>
+{:else}
+	<button type="button" class={classes}>
+		{text}
+	</button>
+{/if}
+
+
