@@ -3,6 +3,19 @@
 	import Subtitle from '$lib/components/Subtitle.svelte';
 	import Button from '$lib/components/Button.svelte';
 
+	type Organizer = {
+		name: string;
+		logo: string;
+		id: string;
+		image: string;
+	};
+
+	type Stat = {
+		label: string;
+		value: string;
+		href?: string;
+	};
+
 	type Competition = {
 		id: string;
 		poster: string;
@@ -106,16 +119,105 @@
 			status: 'ended'
 		}
 	];
+
+	const stats: Stat[] = [
+		{ label: 'Active Competition', value: '34', href: '/competitions?status=active' },
+		{ label: 'Total Competition', value: '200K', href: '/competitions' },
+		{ label: 'Verified Organizers', value: '1.5K' },
+		{ label: 'Total Prize Pool', value: 'Rp 5B' }
+	];
+
+	const organizers: Organizer[] = [
+		{ id: 'org001', name: 'Nusantara Art Lab', logo: '🎨', image: 'https://via.placeholder.com/160x160.png?text=NA' },
+		{ id: 'org002', name: 'Lens Club', logo: '📸', image: 'https://via.placeholder.com/160x160.png?text=LC' },
+		{ id: 'org003', name: 'Sastra ID', logo: '✍️', image: 'https://via.placeholder.com/160x160.png?text=SI' },
+		{ id: 'org004', name: 'CineVerse', logo: '🎬', image: 'https://via.placeholder.com/160x160.png?text=CV' },
+		{ id: 'org005', name: 'Indie Sound', logo: '🎵', image: 'https://via.placeholder.com/160x160.png?text=IS' },
+		{ id: 'org006', name: 'Tech Forge', logo: '💻', image: 'https://via.placeholder.com/160x160.png?text=TF' },
+		{ id: 'org007', name: 'StageCraft', logo: '🎭', image: 'https://via.placeholder.com/160x160.png?text=SC' },
+		{ id: 'org008', name: 'Kuliner Pro', logo: '🍳', image: 'https://via.placeholder.com/160x160.png?text=KP' },
+		{ id: 'org009', name: 'RunNation', logo: '🏃', image: 'https://via.placeholder.com/160x160.png?text=RN' },
+		{ id: 'org010', name: 'EduSpark', logo: '📚', image: 'https://via.placeholder.com/160x160.png?text=ES' },
+		{ id: 'org011', name: 'Digital Craft', logo: '🧵', image: 'https://via.placeholder.com/160x160.png?text=DC' },
+		{ id: 'org012', name: 'Code Arena', logo: '👨‍💻', image: 'https://via.placeholder.com/160x160.png?text=CA' },
+		{ id: 'org013', name: 'FotoKita', logo: '📷', image: 'https://via.placeholder.com/160x160.png?text=FK' },
+		{ id: 'org014', name: 'GameVerse', logo: '🎮', image: 'https://via.placeholder.com/160x160.png?text=GV' },
+		{ id: 'org015', name: 'Dance Nation', logo: '🕺', image: 'https://via.placeholder.com/160x160.png?text=DN' },
+		{ id: 'org016', name: 'Startup Hub', logo: '🚀', image: 'https://via.placeholder.com/160x160.png?text=SH' },
+		{ id: 'org017', name: 'Eco Warriors', logo: '🌿', image: 'https://via.placeholder.com/160x160.png?text=EW' },
+		{ id: 'org018', name: 'Math League', logo: '➗', image: 'https://via.placeholder.com/160x160.png?text=ML' },
+		{ id: 'org019', name: 'Science Lab', logo: '🔬', image: 'https://via.placeholder.com/160x160.png?text=SL' },
+		{ id: 'org020', name: 'Fashion Hive', logo: '👗', image: 'https://via.placeholder.com/160x160.png?text=FH' },
+		{ id: 'org021', name: 'Culinary House', logo: '🥐', image: 'https://via.placeholder.com/160x160.png?text=CH' },
+		{ id: 'org022', name: 'Design Sprint', logo: '🖌️', image: 'https://via.placeholder.com/160x160.png?text=DS' },
+		{ id: 'org023', name: 'Music Lab', logo: '🎹', image: 'https://via.placeholder.com/160x160.png?text=MLab' },
+		{ id: 'org024', name: 'Film Studio', logo: '🎥', image: 'https://via.placeholder.com/160x160.png?text=FS' },
+		{ id: 'org025', name: 'Sports Hub', logo: '⚽', image: 'https://via.placeholder.com/160x160.png?text=SP' }
+	];
 </script>
 
 <div class="container mx-auto px-4 py-16">
+	<section class="mb-12">
+		<div class="flex items-start gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
+			{#each organizers as organizer}
+				<a
+					href={`/competitions?organizer=${organizer.id}`}
+					class="flex flex-col items-center min-w-[110px] snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+				>
+					<div
+						class="w-24 h-24 rounded-full border-[6px] border-red-500 bg-center bg-cover bg-no-repeat shadow-sm"
+						style={`background-image: url('${organizer.image}')`}
+					>
+					</div>
+					<p class="mt-2 text-sm font-medium text-gray-700 text-center line-clamp-2">
+						{organizer.name}
+					</p>
+				</a>
+			{/each}
+		</div>
+	</section>
+
 	<div class="max-w-4xl mx-auto text-center mb-16">
 		<div class="bg-red-50 rounded-lg p-8 shadow-lg">
+			<p class="text-gray-700 leading-relaxed mb-4">
+				Kamu ingin mengikuti lomba-lomba online dan memenangkan hadiah? Silahkan klik di sini
+				<a href="/competitions" class="font-semibold text-red-600 hover:underline">Ikuti Kompetisi</a>.
+			</p>
 			<p class="text-gray-700 leading-relaxed">
-				Ikuti beragam lomba online/offline yang bisa di temukan disini, dan menangkan hadianya.
+				Atau kamu sebagai penyelenggara kompetisi ingin agar lomba kamu makin ramai?
+				<a href="/add-competition" class="font-semibold text-red-600 hover:underline">Pasang di sini</a>.
 			</p>
 		</div>
 	</div>
+
+	<section class="mb-16">
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+			{#each stats as stat}
+				{#if stat.href}
+					<a
+						href={stat.href}
+						class="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+					>
+						<p class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">
+							{stat.label}
+						</p>
+						<p class="text-3xl font-bold text-gray-900">
+							{stat.value}
+						</p>
+					</a>
+				{:else}
+					<div class="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+						<p class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">
+							{stat.label}
+						</p>
+						<p class="text-3xl font-bold text-gray-900">
+							{stat.value}
+						</p>
+					</div>
+				{/if}
+			{/each}
+		</div>
+	</section>
 
 	<!-- Lomba Terbaru Section -->
 	<section class="mb-16">
