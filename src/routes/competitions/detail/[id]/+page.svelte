@@ -87,7 +87,7 @@
     <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 capitalize">
         {title || 'Competition Detail'}
     </h1>
-
+    <div style="height:20px"></div>
     <div class="flex flex-col lg:flex-row gap-8">
         <!-- Poster -->
         <div class="w-full lg:w-1/2 lg:sticky lg:top-6 lg:self-start">
@@ -278,8 +278,31 @@
 
 {#if showPosterModal}
     <!-- Poster Modal -->
-    <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4" on:click={() => (showPosterModal = false)}>
-        <div class="relative max-w-3xl w-full max-h-[90vh]" on:click|stopPropagation>
+    <div
+        class="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4"
+        role="button"
+        aria-label="Tutup modal poster"
+        tabindex="0"
+        on:click={() => (showPosterModal = false)}
+        on:keydown={(event) => {
+            if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                showPosterModal = false;
+            }
+        }}
+    >
+        <div
+            class="relative max-w-3xl w-full"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || 'Poster kompetisi'}
+            tabindex="-1"
+            on:click|stopPropagation
+            on:keydown={(event) => {
+                if (event.key === 'Escape') {
+                    showPosterModal = false;
+                }
+            }}
+        >
             <button
                 type="button"
                 class="absolute -top-3 -right-3 bg-white rounded-full shadow p-1 text-gray-700 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
@@ -288,11 +311,11 @@
             >
                 ✕
             </button>
-            <div class="overflow-hidden rounded-xl bg-black max-h-[90vh]">
+            <div class="rounded-xl bg-black flex items-center justify-center max-h-[90vh]">
                 <img
                     src={competition.poster}
                     alt={title || 'Competition poster'}
-                    class="w-full h-full object-contain bg-black"
+                    class="max-h-[90vh] w-auto object-contain bg-black"
                 />
             </div>
         </div>

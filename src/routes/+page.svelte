@@ -1,14 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import CompetitionCard from '$lib/components/CompetitionCard.svelte';
 	import Subtitle from '$lib/components/Subtitle.svelte';
 	import Button from '$lib/components/Button.svelte';
-
-	type Organizer = {
-		name: string;
-		logo: string;
-		id: string;
-		image: string;
-	};
+	import OrganizerList from '$lib/components/OrganizerList.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import { CompetitionsAPI } from '$lib/api/competitions';
+	import { OrganizersAPI } from '$lib/api/organizers';
+	import type { Organizer } from '$routes/api/organizers/$types';
 
 	type Stat = {
 		label: string;
@@ -27,98 +26,27 @@
 		status: 'progress' | 'ended' | 'closed';
 	};
 
-	const competitions: Competition[] = [
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e01',
-			poster: '🎨',
-			title: 'Lomba Desain Grafis Digital 2025',
-			endDate: '15 Desember 2025',
-			organizer: 'Kreatif Indonesia',
-			prize: 'Rp 25.000.000',
-			category: 'Desain',
-			status: 'progress'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e02',
-			poster: '📸',
-			title: 'Kompetisi Fotografi Landscape',
-			endDate: '20 Desember 2025',
-			organizer: 'Fotografi Nusantara',
-			prize: 'Rp 15.000.000',
-			category: 'Fotografi',
-			status: 'closed'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e03',
-			poster: '✍️',
-			title: 'Lomba Menulis Cerita Pendek',
-			endDate: '10 Januari 2026',
-			organizer: 'Sastra Indonesia',
-			prize: 'Rp 20.000.000',
-			category: 'Sastra',
-			status: 'progress'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e04',
-			poster: '🎬',
-			title: 'Kompetisi Video Kreatif Pendek',
-			endDate: '5 Januari 2026',
-			organizer: 'Media Kreatif',
-			prize: 'Rp 30.000.000',
-			category: 'Video',
-			status: 'ended'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e05',
-			poster: '🎵',
-			title: 'Lomba Musik Indie Indonesia',
-			endDate: '25 Desember 2025',
-			organizer: 'Musik Nusantara',
-			prize: 'Rp 35.000.000',
-			category: 'Musik',
-			status: 'closed'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e06',
-			poster: '💻',
-			title: 'Hackathon Aplikasi Mobile',
-			endDate: '12 Januari 2026',
-			organizer: 'Tech Indonesia',
-			prize: 'Rp 50.000.000',
-			category: 'Teknologi',
-			status: 'progress'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e07',
-			poster: '🎭',
-			title: 'Kompetisi Teater Digital',
-			endDate: '8 Januari 2026',
-			organizer: 'Seni Pertunjukan',
-			prize: 'Rp 18.000.000',
-			category: 'Teater',
-			status: 'ended'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e08',
-			poster: '🍳',
-			title: 'Lomba Masak Kreatif Online',
-			endDate: '30 Desember 2025',
-			organizer: 'Kuliner Indonesia',
-			prize: 'Rp 22.000.000',
-			category: 'Kuliner',
-			status: 'progress'
-		},
-		{
-			id: '673b1c2a9d5f1a0b2c3d4e09',
-			poster: '🏃',
-			title: 'Virtual Run Challenge 2025',
-			endDate: '31 Desember 2025',
-			organizer: 'Olahraga Digital',
-			prize: 'Rp 12.000.000',
-			category: 'Olahraga',
-			status: 'ended'
+	let competitions: Competition[] = [];
+	let organizers: Organizer[] = [];
+	let loading = true;
+	let error: string | null = null;
+
+	// Fetch data from APIs
+	onMount(async () => {
+		try {
+			const [competitionsResponse, organizersResponse] = await Promise.all([
+				CompetitionsAPI.getCompetitions(9),
+				OrganizersAPI.getOrganizers()
+			]);
+			competitions = competitionsResponse.data;
+			organizers = organizersResponse.data;
+		} catch (err) {
+			console.error('Failed to fetch data:', err);
+			error = 'Failed to load data';
+		} finally {
+			loading = false;
 		}
-	];
+	});
 
 	const stats: Stat[] = [
 		{ label: 'Active Competition', value: '34', href: '/competitions?status=active' },
@@ -126,56 +54,36 @@
 		{ label: 'Verified Organizers', value: '1.5K' },
 		{ label: 'Total Prize Pool', value: 'Rp 5B' }
 	];
-
-	const organizers: Organizer[] = [
-		{ id: 'org001', name: 'Nusantara Art Lab', logo: '🎨', image: 'https://via.placeholder.com/160x160.png?text=NA' },
-		{ id: 'org002', name: 'Lens Club', logo: '📸', image: 'https://via.placeholder.com/160x160.png?text=LC' },
-		{ id: 'org003', name: 'Sastra ID', logo: '✍️', image: 'https://via.placeholder.com/160x160.png?text=SI' },
-		{ id: 'org004', name: 'CineVerse', logo: '🎬', image: 'https://via.placeholder.com/160x160.png?text=CV' },
-		{ id: 'org005', name: 'Indie Sound', logo: '🎵', image: 'https://via.placeholder.com/160x160.png?text=IS' },
-		{ id: 'org006', name: 'Tech Forge', logo: '💻', image: 'https://via.placeholder.com/160x160.png?text=TF' },
-		{ id: 'org007', name: 'StageCraft', logo: '🎭', image: 'https://via.placeholder.com/160x160.png?text=SC' },
-		{ id: 'org008', name: 'Kuliner Pro', logo: '🍳', image: 'https://via.placeholder.com/160x160.png?text=KP' },
-		{ id: 'org009', name: 'RunNation', logo: '🏃', image: 'https://via.placeholder.com/160x160.png?text=RN' },
-		{ id: 'org010', name: 'EduSpark', logo: '📚', image: 'https://via.placeholder.com/160x160.png?text=ES' },
-		{ id: 'org011', name: 'Digital Craft', logo: '🧵', image: 'https://via.placeholder.com/160x160.png?text=DC' },
-		{ id: 'org012', name: 'Code Arena', logo: '👨‍💻', image: 'https://via.placeholder.com/160x160.png?text=CA' },
-		{ id: 'org013', name: 'FotoKita', logo: '📷', image: 'https://via.placeholder.com/160x160.png?text=FK' },
-		{ id: 'org014', name: 'GameVerse', logo: '🎮', image: 'https://via.placeholder.com/160x160.png?text=GV' },
-		{ id: 'org015', name: 'Dance Nation', logo: '🕺', image: 'https://via.placeholder.com/160x160.png?text=DN' },
-		{ id: 'org016', name: 'Startup Hub', logo: '🚀', image: 'https://via.placeholder.com/160x160.png?text=SH' },
-		{ id: 'org017', name: 'Eco Warriors', logo: '🌿', image: 'https://via.placeholder.com/160x160.png?text=EW' },
-		{ id: 'org018', name: 'Math League', logo: '➗', image: 'https://via.placeholder.com/160x160.png?text=ML' },
-		{ id: 'org019', name: 'Science Lab', logo: '🔬', image: 'https://via.placeholder.com/160x160.png?text=SL' },
-		{ id: 'org020', name: 'Fashion Hive', logo: '👗', image: 'https://via.placeholder.com/160x160.png?text=FH' },
-		{ id: 'org021', name: 'Culinary House', logo: '🥐', image: 'https://via.placeholder.com/160x160.png?text=CH' },
-		{ id: 'org022', name: 'Design Sprint', logo: '🖌️', image: 'https://via.placeholder.com/160x160.png?text=DS' },
-		{ id: 'org023', name: 'Music Lab', logo: '🎹', image: 'https://via.placeholder.com/160x160.png?text=MLab' },
-		{ id: 'org024', name: 'Film Studio', logo: '🎥', image: 'https://via.placeholder.com/160x160.png?text=FS' },
-		{ id: 'org025', name: 'Sports Hub', logo: '⚽', image: 'https://via.placeholder.com/160x160.png?text=SP' }
-	];
 </script>
 
 <div class="max-w-5xl mx-auto px-4 py-16">
-	<section class="mb-12">
-		<div class="flex items-start gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
-			{#each organizers as organizer}
-				<a
-					href={`/competitions?organizer=${organizer.id}`}
-					class="flex flex-col items-center min-w-[110px] snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-				>
-					<div
-						class="w-24 h-24 rounded-full border-[6px] border-red-500 bg-center bg-cover bg-no-repeat shadow-sm"
-						style={`background-image: url('${organizer.image}')`}
-					>
-					</div>
-					<p class="mt-2 text-sm font-medium text-gray-700 text-center line-clamp-2">
-						{organizer.name}
-					</p>
-				</a>
-			{/each}
+	{#if loading}
+		<div class="mb-12">
+			<div class="mb-6">
+				<h2 class="text-xl font-bold text-gray-900">Latest Organizers Posted</h2>
+			</div>
+			<div class="flex justify-center py-8">
+				<Spinner size="large" color="primary" />
+			</div>
 		</div>
-	</section>
+	{:else if error}
+		<div class="mb-12">
+			<div class="mb-6">
+				<h2 class="text-xl font-bold text-gray-900">Latest Organizers Posted</h2>
+			</div>
+			<div class="text-center py-8">
+				<p class="text-red-600 mb-4">{error}</p>
+				<button 
+					on:click={() => window.location.reload()} 
+					class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+				>
+					Retry
+				</button>
+			</div>
+		</div>
+	{:else}
+		<OrganizerList {organizers} title="Latest Organizers Posted" />
+	{/if}
 
 	<div class="max-w-4xl mx-auto text-center mb-16">
 		<div class="bg-red-50 rounded-lg p-8 shadow-lg">
@@ -223,14 +131,38 @@
 	<section class="mb-16">
 		<Subtitle text="Lomba Terbaru" subtext="Lomba terbaru yang bisa di ikuti" />
 		
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			{#each competitions as competition}
-				<CompetitionCard {competition} status={competition.status} id={competition.id} />
-			{/each}
-		</div>
+		{#if loading}
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{#each Array(9) as _}
+					<div class="bg-gray-100 rounded-xl p-6 animate-pulse">
+						<div class="h-8 bg-gray-200 rounded mb-4"></div>
+						<div class="h-4 bg-gray-200 rounded mb-2"></div>
+						<div class="h-4 bg-gray-200 rounded w-3/4"></div>
+					</div>
+				{/each}
+			</div>
+		{:else if error}
+			<div class="text-center py-12">
+				<p class="text-red-600 mb-4">{error}</p>
+				<button 
+					on:click={() => window.location.reload()} 
+					class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+				>
+					Retry
+				</button>
+			</div>
+		{:else}
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{#each competitions as competition}
+					<CompetitionCard {competition} status={competition.status} id={competition.id} />
+				{/each}
+			</div>
+		{/if}
 
 		<div class="mt-10 flex justify-center">
-			<Button text="Lomba Lainnya" type="link" href="/competitions" variant="large" size="auto" />
+			{#if !loading && !error}
+				<Button text="Lomba Lainnya" type="link" href="/competitions" variant="large" size="auto" />
+			{/if}
 		</div>
 	</section>
 </div>

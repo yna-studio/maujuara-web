@@ -4,6 +4,7 @@
     import Subtitle from "$lib/components/Subtitle.svelte";
     import Button from "$lib/components/Button.svelte";
     import FullWidthMessage from "$lib/components/FullWidthMessage.svelte";
+    import Spinner from "$lib/components/Spinner.svelte";
 
     // Sample data - replace with your actual data source
     const competitions = [
@@ -256,9 +257,7 @@
 
     <!-- Loading Spinner -->
     <div class="flex justify-center py-8">
-        <div
-            class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"
-        ></div>
+        <Spinner size="large" color="primary" />
     </div>
 
     <!-- No Results -->
