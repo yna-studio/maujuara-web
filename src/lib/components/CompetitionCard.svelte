@@ -33,9 +33,17 @@
 		{/if}
 	</div>
 
-	<!-- Poster -->
-	<div class="w-full h-48 bg-red-500 flex items-center justify-center">
-		<span class="text-white text-4xl font-bold">{competition.poster}</span>
+	<!-- Poster with Background Image -->
+	<div class="relative w-full h-48 overflow-hidden bg-gray-200">
+		<!-- Background Image -->
+		<div 
+			class="absolute inset-0 bg-cover bg-center"
+			style="background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1131&q=80');"
+		>
+			<!-- Gradient Overlay -->
+			<div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+			
+		</div>
 	</div>
 
 	<!-- Card Content -->

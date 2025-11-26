@@ -21,4 +21,14 @@ pnpm install
 pnpm dev
 ```
 
+## Vibe Coding
+
+This project was developed with the assistance of the following AI models:
+
+- **Cascade** - Primary coding assistant for implementation and debugging
+- **GPT-4** - For natural language understanding and code generation
+- **Claude** - For code review and optimization suggestions
+
+These AI tools were used to accelerate development, provide code suggestions, and assist with problem-solving throughout the project.
+
 

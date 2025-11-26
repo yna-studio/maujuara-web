@@ -156,7 +156,7 @@
 	];
 </script>
 
-<div class="container mx-auto px-4 py-16">
+<div class="max-w-5xl mx-auto px-4 py-16">
 	<section class="mb-12">
 		<div class="flex items-start gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
 			{#each organizers as organizer}
