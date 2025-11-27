@@ -27,13 +27,21 @@
 
     $: organizerDetailPath = competition ? `/organizers/detail/${slugify(competition.organizer.name)}-${competition.organizer.id}` : '';
 
-    $: statusLabel = competition
+    $: statusLabel = competition 
         ? competition.status === 'open'
             ? 'Open'
-            : competition.status === 'closed'
-                ? 'Berlangsung'
-                : 'Berakhir'
+            : competition.status === 'ended'
+                ? 'Berakhir'
+                : 'Berlangsung'
         : '';
+
+    $: statusColor = competition 
+        ? competition.status === 'open'
+            ? 'green'
+            : competition.status === 'ended'
+                ? 'red'
+                : 'gray'
+        : 'gray';
 
     // Format date for display
     const formatDate = (dateString: string) => {
@@ -155,8 +163,8 @@
             <div class="w-full lg:w-1/2 space-y-6">
                 <!-- Status + Actions -->
                 <div class="flex items-center justify-between gap-3">
-                    <div class="inline-flex items-center px-3 py-1.5 rounded-full bg-green-50 text-xs sm:text-sm font-semibold text-green-700 border border-green-200">
-                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                    <div class="inline-flex items-center px-3 py-1.5 rounded-full bg-{statusColor}-50 text-xs sm:text-sm font-semibold text-{statusColor}-700 border border-{statusColor}-200">
+                        <span class="w-2 h-2 rounded-full bg-{statusColor}-500 mr-2"></span>
                         <span>{statusLabel}</span>
                     </div>
                     <div class="relative">
@@ -268,9 +276,34 @@
                 <!-- Content -->
                 <section class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800">
                     <h2 class="text-base font-semibold mb-3">Deskripsi Kompetisi</h2>
-                    <div class="prose prose-sm max-w-none">
-                        {@html competition.desc || '<p>Tidak ada deskripsi tersedia.</p>'}
-                    </div>
+                    <div class="prose prose-sm max-w-none competition-description">
+                {@html competition.desc || '<p>Tidak ada deskripsi tersedia.</p>'}
+            </div>
+
+            <style>
+                /* Custom styles for competition description */
+                .competition-description ol {
+                    list-style-type: decimal;
+                    padding-left: 1.5rem;
+                    margin: 1rem 0;
+                }
+
+                .competition-description ol li {
+                    margin-bottom: 0.5rem;
+                    padding-left: 0.5rem;
+                }
+
+                .competition-description a {
+                    color: rgb(239 68 68) !important; /* red-600 */
+                    text-decoration: underline;
+                    font-weight: 500;
+                }
+
+                .competition-description a:hover {
+                    color: rgb(220 38 38) !important; /* red-700 */
+                    text-decoration: none;
+                }
+            </style>
                 </section>
 
                 <!-- Contact Section -->

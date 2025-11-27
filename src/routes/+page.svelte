@@ -25,7 +25,7 @@
 		organizer: string;
 		prize: string;
 		category: string;
-		status: 'open' | 'progress' | 'closed';
+		status: 'open' | 'progress' | 'ended';
 	};
 
 	let competitions: Competition[] = [];

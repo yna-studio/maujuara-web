@@ -22,7 +22,7 @@
         poster: string;
         deadline_date: string;
         announcement_date: string;
-        status: 'open' | 'progress' | 'closed';
+        status: 'open' | 'progress' | 'ended';
         category: {
             id: string;
             name: string;
@@ -67,7 +67,7 @@
     const statuses = [
         { value: "open", text: "Open" },
         { value: "progress", text: "Berlangsung" },
-        { value: "closed", text: "Berakhir" }
+        { value: "ended", text: "Berakhir" }
     ];
 
     // Pagination
@@ -302,7 +302,7 @@
             {#each competitions as competition}
                 <CompetitionCard
                     {competition}
-                    status={competition.status === 'open' ? 'progress' : competition.status}
+                    status={competition.status === 'open' ? 'open' : competition.status}
                 />
             {/each}
         </div>

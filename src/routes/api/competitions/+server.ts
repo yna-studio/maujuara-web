@@ -14,6 +14,7 @@ interface CompetitionData {
 	deadline_date: string;
 	announcement_date: string;
 	organizer: string;
+	category: string;
 	prize_desc: string;
 	prize_estimate?: number;
 	desc: string;
@@ -51,10 +52,10 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 		
 		// Validate status if provided
-		const validStatuses = ['open', 'progress', 'closed'];
+		const validStatuses = ['open', 'progress', 'ended'];
 		if (status && !validStatuses.includes(status)) {
 			return json({
-				error: 'Invalid status parameter. Must be one of: open, progress, closed',
+				error: 'Invalid status parameter. Must be one of: open, progress, ended',
 				status: 400
 			}, { status: 400 });
 		}
@@ -110,12 +111,12 @@ export const GET: RequestHandler = async ({ url }) => {
 		const now = new Date();
 		if (status) {
 			if (status === 'open') {
-				query.deadline_date = { $gt: now.toISOString() };
+				query.deadline_date = { $gt: now };
 			} else if (status === 'progress') {
-				query.deadline_date = { $lte: now.toISOString() };
-				query.announcement_date = { $gt: now.toISOString() };
-			} else if (status === 'closed') {
-				query.announcement_date = { $lte: now.toISOString() };
+				query.deadline_date = { $lte: now };
+				query.announcement_date = { $gte: now };
+			} else if (status === 'ended') {
+				query.announcement_date = { $lte: now };
 			}
 		}
 		
@@ -147,16 +148,16 @@ export const GET: RequestHandler = async ({ url }) => {
 					$addFields: {
 						status: {
 							$cond: {
-								if: { $lt: [new Date(), '$deadline_date'] },
+								if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
 								then: 'open',
 								else: {
 									$cond: {
 										if: { $and: [
-											{ $gte: [new Date(), '$deadline_date'] },
-											{ $lt: [new Date(), '$announcement_date'] }
+											{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
+											{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
 										]},
 										then: 'progress',
-										else: 'closed'
+										else: 'ended'
 									}
 								}
 							}
@@ -250,6 +251,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			deadline_date,
 			announcement_date,
 			organizer,
+			category,
 			prize_desc,
 			prize_estimate = 0,
 			desc,
@@ -258,7 +260,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}: CompetitionData = body;
 		
 		// Validate required fields
-		const requiredFields = ['title', 'poster', 'deadline_date', 'announcement_date', 'organizer', 'prize_desc', 'desc', 'contacts', 'link_join'];
+		const requiredFields = ['title', 'poster', 'deadline_date', 'announcement_date', 'organizer', 'category', 'prize_desc', 'desc', 'contacts', 'link_join'];
 		const missingFields = requiredFields.filter(field => !body[field] || (typeof body[field] === 'string' && body[field].trim() === ''));
 		
 		if (missingFields.length > 0) {
@@ -272,6 +274,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (!ObjectId.isValid(organizer)) {
 			return json({
 				error: 'Invalid organizer ID format',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		// Validate ObjectId format for category
+		if (!ObjectId.isValid(category)) {
+			return json({
+				error: 'Invalid category ID format',
 				status: 400
 			}, { status: 400 });
 		}
@@ -346,6 +356,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			deadline_date: new Date(deadline_date).toISOString(),
 			announcement_date: new Date(announcement_date).toISOString(),
 			organizer: new ObjectId(organizer),
+			category: new ObjectId(category),
 			created_date: currentTime,
 			updated_date: currentTime,
 			views: 1,

@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let competition;
-	export let status: 'open' | 'progress' | 'closed' = 'open';
+	export let status: 'open' | 'progress' | 'ended' = 'open';
 
 	const slugify = (value: string) =>
 		value
@@ -28,10 +28,10 @@
 		
 		if (now < deadline) return 'open';
 		if (now >= deadline && now < announcement) return 'progress';
-		return 'closed';
+		return 'ended';
 	};
 	
-	const currentStatus = status || calculateStatus();
+	const currentStatus = status || competition.status || 'open';
 	
 	// Format prize
 	const formatPrize = () => {
@@ -54,15 +54,15 @@
 	<div class="absolute top-3 left-3 z-10">
 		{#if currentStatus === 'open'}
 			<span class="inline-block bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
-				Open
+				open
 			</span>
 		{:else if currentStatus === 'progress'}
 			<span class="inline-block bg-gray-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
-				Berakhir
-			</span>
-		{:else if currentStatus === 'closed'}
-			<span class="inline-block bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
 				Berlangsung
+			</span>
+		{:else if currentStatus === 'ended'}
+			<span class="inline-block bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+				Berakhir
 			</span>
 		{/if}
 	</div>

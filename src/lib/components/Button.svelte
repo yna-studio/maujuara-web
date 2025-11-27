@@ -4,6 +4,8 @@
 	export let variant: 'large' | 'medium' | 'small' = 'medium';
 	export let size: 'full' | 'auto' = 'auto';
 	export let href = '#';
+	export let target = '';
+	export let rel = '';
 	export let className = ""
 
 	const baseClasses =
@@ -22,7 +24,7 @@
 </script>
 
 {#if type === 'link'}
-	<a href={href} class={classes + ' ' + className} on:click>
+	<a href={href} {target} {rel} class={classes + ' ' + className} on:click>
 		{text}
 	</a>
 {:else}

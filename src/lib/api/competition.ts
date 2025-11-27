@@ -17,7 +17,7 @@ interface Competition {
 		value: string;
 	}>;
 	link_join: string;
-	status: 'open' | 'progress' | 'closed';
+	status: 'open' | 'progress' | 'ended';
 	category: {
 		id: string;
 		name: string;
