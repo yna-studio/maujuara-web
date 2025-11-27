@@ -1,6 +1,7 @@
 // Basic MongoDB config helper. Use only from server-side code.
+import { env } from '$env/dynamic/private';
 
-const { MONGODB_HOST, MONGODB_USER, MONGODB_PASSWORD } = process.env;
+const { MONGODB_HOST, MONGODB_USER, MONGODB_PASSWORD } = env;
 
 if (!MONGODB_HOST || !MONGODB_USER || !MONGODB_PASSWORD) {
   console.warn('[mongodb config] Missing one or more MongoDB env variables (MONGODB_HOST, MONGODB_USER, MONGODB_PASSWORD).');

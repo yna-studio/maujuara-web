@@ -8,6 +8,7 @@
 	// Build simple breadcrumb from current path
 	$: segments = $page.url.pathname.split('/').filter(Boolean);
 	$: isHome = segments.length === 0;
+	$: isErrorPage = $page.status && $page.status >= 400;
 	const formatSegment = (segment: string) =>
 		segment.charAt(0).toUpperCase() + segment.slice(1);
 	$: breadcrumbItems = [
@@ -24,7 +25,8 @@
 
 	{#if !isHome}
 		<div class="px-4 pt-6 pb-2">
-			<nav class="text-md sm:text-sm text-center" aria-label="Breadcrumb">
+			<div class="max-w-5xl mx-auto px-3">
+				<nav class="text-md sm:text-sm {isErrorPage ? 'text-center' : 'text-left'}" aria-label="Breadcrumb">
 				{#each breadcrumbItems as item, index (item.href)}
 					{#if index === breadcrumbItems.length - 1}
 						<span class="font-medium text-red-600">{item.label}</span>
@@ -39,6 +41,7 @@
 					{/if}
 				{/each}
 			</nav>
+			</div>
 		</div>
 	{/if}
 
