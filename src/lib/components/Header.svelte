@@ -31,7 +31,7 @@
 					isCompetitions ? 'text-red-600' : 'text-gray-700 hover:text-red-600'
 				}`}
 			>
-				Competitions
+				Jelajah Kompetisi
 			</a>
 			<a
 				href="/organizers"
@@ -47,7 +47,7 @@
 					isNews ? 'text-red-600' : 'text-gray-700 hover:text-red-600'
 				}`}
 			>
-				News
+				Berita
 			</a>
 		</div>
 
@@ -85,7 +85,7 @@
 						isCompetitions ? 'text-red-600' : 'text-gray-700 hover:text-red-600'
 					}`}
 				>
-					Competitions
+					Jelajah Kompetisi
 				</a>
 				<a
 					href="/organizers"
@@ -101,7 +101,7 @@
 						isNews ? 'text-red-600' : 'text-gray-700 hover:text-red-600'
 					}`}
 				>
-					News
+					Berita
 				</a>
 			</div>
 		</nav>

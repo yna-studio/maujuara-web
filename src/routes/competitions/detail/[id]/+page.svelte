@@ -13,7 +13,7 @@
     // Mocked competition data - replace later with real data from API/DB
     let competition = {
         poster:
-            'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYcW-mfR2gkRFGuZWL-_pR6AccArLGWqQdK_gAbgyTW3kjRc6U_HgTJ5of_wuIDy_eENe2Z1NO4ZJpYh5Kg4ef68MvUxSqcViHq9QFZPeUHw-50OYWcgC9u84a528km83haHOApCNA4n6EUG3dSGPn5Oo1mja_QNQN1_3dj9Skbgs6NWiXpccd-PRXHJ8/s614/lomba%202024.png',
+            'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYcW-mfR2gkRFGuZWL-_pR6AccArLGWqQdK_gAbgyTW3kjRc6U_HgTJ5of_wuIDy_eENe2Z1NO4ZJpYh5Kg4ef68MvUxSqcViHq9QFZPeUHw-50OYWcgC9u84a528km83haHOApCNA4n6EUG3dSGPn5Oo1mja_QNQN1_3dj9Skbgs6NWiXpccd-PRXHJ8/s614/kompetisi%202024.png',
         organizer: 'Kreatif Indonesia',
         organizerId: 'org001',
         status: 'progress', // progress | closed | ended
@@ -28,7 +28,7 @@
         shortDesc:
             'Ikuti kompetisi seru dari Kreatif Indonesia! Tunjukkan karya terbaikmu dan menangkan hadiah menarik.',
         contentHtml:
-            '<p>Ikuti kompetisi ini untuk menunjukkan kreativitasmu. Kompetisi terbuka untuk pelajar, mahasiswa, dan umum.</p><p>Pastikan membaca ketentuan lomba dengan teliti sebelum mendaftar. Semua karya harus orisinal dan belum pernah dipublikasikan sebelumnya.</p>',
+            '<p>Ikuti kompetisi ini untuk menunjukkan kreativitasmu. Kompetisi terbuka untuk pelajar, mahasiswa, dan umum.</p><p>Pastikan membaca ketentuan kompetisi dengan teliti sebelum mendaftar. Semua karya harus orisinal dan belum pernah dipublikasikan sebelumnya.</p>',
     };
 
     const slugify = (value: string) =>

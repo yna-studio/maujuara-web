@@ -11,7 +11,7 @@
         {
             id: "1",
             poster: "🎨",
-            title: "Lomba Desain Grafis Digital 2025",
+            title: "Kompetisi Desain Grafis Digital 2025",
             endDate: "15 Desember 2025",
             organizer: "Kreatif Indonesia",
             prize: "Rp 25.000.000",
@@ -42,7 +42,7 @@
         {
             id: "4",
             poster: "🎭",
-            title: "Lomba Teater Remaja",
+            title: "Kompetisi Teater Remaja",
             endDate: "5 Desember 2025",
             organizer: "Seni Budaya Nusantara",
             prize: "Rp 10.000.000",
@@ -52,7 +52,7 @@
         {
             id: "5",
             poster: "✏️",
-            title: "Lomba Menulis Cerpen",
+            title: "Kompetisi Menulis Cerpen",
             endDate: "30 November 2025",
             organizer: "Sastra Indonesia",
             prize: "Rp 8.000.000",
@@ -82,7 +82,7 @@
         {
             id: "8",
             poster: "🍳",
-            title: "Lomba Masak Nusantara",
+            title: "Kompetisi Masak Nusantara",
             endDate: "10 Desember 2025",
             organizer: "Kuliner Indonesia",
             prize: "Rp 20.000.000",
@@ -170,8 +170,8 @@
 
 <main class="max-w-5xl mx-auto px-4 py-8">
     <Subtitle
-        text="Jelajah Lomba"
-        subtext="Ikuti beragam lomba disini, gunakan filter untuk menemukan lomba yang paling sesuai"
+        text="Jelajah Kompetisi"
+        subtext="Ikuti beragam kompetisi disini, gunakan filter untuk menemukan kompetisi yang paling sesuai"
     />
 
     <!-- Mobile Filter Toggle -->
@@ -189,7 +189,7 @@
     <div
         class={`mb-8 pb-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${showMobileFilters ? '' : 'hidden sm:flex'}`}
     >
-        <h2 class="sr-only">Filter Lomba</h2>
+        <h2 class="sr-only">Filter Kompetisi</h2>
         <div class="flex-1 flex flex-col sm:flex-row gap-4 w-full">
             <!-- Category Filter -->
             <div>

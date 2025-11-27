@@ -7,7 +7,7 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { CompetitionsAPI } from '$lib/api/competitions';
 	import { OrganizersAPI } from '$lib/api/organizers';
-	import type { Organizer } from '$routes/api/organizers/$types';
+	import type { Organizer } from '$lib/api/organizers';
 
 	type Stat = {
 		label: string;
@@ -49,10 +49,10 @@
 	});
 
 	const stats: Stat[] = [
-		{ label: 'Active Competition', value: '34', href: '/competitions?status=active' },
-		{ label: 'Total Competition', value: '200K', href: '/competitions' },
+		{ label: 'Kompetisi Aktif', value: '34', href: '/competitions?status=active' },
+		{ label: 'Total Kompetisi', value: '200K', href: '/competitions' },
 		{ label: 'Verified Organizers', value: '1.5K' },
-		{ label: 'Total Prize Pool', value: 'Rp 5B' }
+		{ label: 'Hadiah Tahun Ini', value: 'Rp 5B' }
 	];
 </script>
 
@@ -60,7 +60,7 @@
 	{#if loading}
 		<div class="mb-12">
 			<div class="mb-6">
-				<h2 class="text-xl font-bold text-gray-900">Latest Organizers Posted</h2>
+				<h2 class="text-xl font-bold text-gray-900">Organizers Terbaru</h2>
 			</div>
 			<div class="flex justify-center py-8">
 				<Spinner size="large" color="primary" />
@@ -69,7 +69,7 @@
 	{:else if error}
 		<div class="mb-12">
 			<div class="mb-6">
-				<h2 class="text-xl font-bold text-gray-900">Latest Organizers Posted</h2>
+				<h2 class="text-xl font-bold text-gray-900">Organizers Terbaru</h2>
 			</div>
 			<div class="text-center py-8">
 				<p class="text-red-600 mb-4">{error}</p>
@@ -82,17 +82,17 @@
 			</div>
 		</div>
 	{:else}
-		<OrganizerList {organizers} title="Latest Organizers Posted" />
+		<OrganizerList {organizers} title="Organizers Terbaru" />
 	{/if}
 
 	<div class="max-w-4xl mx-auto text-center mb-16">
 		<div class="bg-red-50 rounded-lg p-8 shadow-lg">
 			<p class="text-gray-700 leading-relaxed mb-4">
-				Kamu ingin mengikuti lomba-lomba online dan memenangkan hadiah? Silahkan klik di sini
+				Kamu ingin mengikuti kompetisi-kompetisi online dan memenangkan hadiah? Silahkan klik di sini
 				<a href="/competitions" class="font-semibold text-red-600 hover:underline">Ikuti Kompetisi</a>.
 			</p>
 			<p class="text-gray-700 leading-relaxed">
-				Atau kamu sebagai penyelenggara kompetisi ingin agar lomba kamu makin ramai?
+				Atau kamu sebagai penyelenggara kompetisi ingin agar kompetisi kamu makin ramai?
 				<a href="/add-competition" class="font-semibold text-red-600 hover:underline">Pasang di sini</a>.
 			</p>
 		</div>
@@ -127,9 +127,9 @@
 		</div>
 	</section>
 
-	<!-- Lomba Terbaru Section -->
+	<!-- Kompetisi Terbaru Section -->
 	<section class="mb-16">
-		<Subtitle text="Lomba Terbaru" subtext="Lomba terbaru yang bisa di ikuti" />
+		<Subtitle text="Kompetisi Terbaru" subtext="Kompetisi terbaru yang bisa di ikuti" />
 		
 		{#if loading}
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -161,7 +161,7 @@
 
 		<div class="mt-10 flex justify-center">
 			{#if !loading && !error}
-				<Button text="Lomba Lainnya" type="link" href="/competitions" variant="large" size="auto" />
+				<Button text="Kompetisi Lainnya" type="link" href="/competitions" variant="large" size="auto" />
 			{/if}
 		</div>
 	</section>

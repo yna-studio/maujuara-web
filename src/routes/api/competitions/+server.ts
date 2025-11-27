@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) => {
         {
             id: "1",
             poster: "🎨",
-            title: "Lomba Desain Grafis Digital 2025",
+            title: "Kompetisi Desain Grafis Digital 2025",
             endDate: "15 Desember 2025",
             organizer: "Kreatif Indonesia",
             prize: "Rp 25.000.000",
@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ url }) => {
         {
             id: "4",
             poster: "🎭",
-            title: "Lomba Teater Remaja",
+            title: "Kompetisi Teater Remaja",
             endDate: "5 Desember 2025",
             organizer: "Seni Budaya Nusantara",
             prize: "Rp 10.000.000",
@@ -60,7 +60,7 @@ export const GET: RequestHandler = async ({ url }) => {
         {
             id: "6",
             poster: "✍️",
-            title: "Lomba Menulis Cerpen Nasional",
+            title: "Kompetisi Menulis Cerpen Nasional",
             endDate: "25 Desember 2025",
             organizer: "Sastra Nusantara",
             prize: "Rp 20.000.000",
