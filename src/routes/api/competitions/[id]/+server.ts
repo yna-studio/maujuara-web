@@ -69,7 +69,7 @@ export const GET: RequestHandler = async ({ params }) => {
 											{ $gte: [new Date(), '$deadline_date'] },
 											{ $lt: [new Date(), '$announcement_date'] }
 										]},
-										then: 'ended',
+										then: 'progress',
 										else: 'closed'
 									}
 								}

@@ -22,11 +22,11 @@
 </script>
 
 {#if type === 'link'}
-	<a href={href} class={classes + ' ' + className}>
+	<a href={href} class={classes + ' ' + className} on:click>
 		{text}
 	</a>
 {:else}
-	<button type="button" class={classes + ' ' + className}>
+	<button type="button" class={classes + ' ' + className} on:click>
 		{text}
 	</button>
 {/if}

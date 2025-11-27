@@ -82,7 +82,7 @@
     async function copyInstagramCaption() {
         try {
             const captionTitle = competition?.title || 'Competition Detail';
-            const captionDesc = competition?.desc || '';
+            const captionDesc = competition?.desc ? stripHtml(competition.desc) + '...' : '';
             const captionLink = $page.url.href;
             const caption = `${captionTitle}\n\n${captionDesc}\n\n${captionLink}`;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -98,6 +98,14 @@
             showStatusMenu = false;
             showSnackbar('Failed to copy caption');
         }
+    }
+
+    // Function to strip HTML tags from string
+    function stripHtml(html: string): string {
+        // Create a temporary div element to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        return tempDiv.textContent || tempDiv.innerText || '';
     }
 </script>
 
@@ -212,12 +220,17 @@
             {#if activeTab === 'regulations'}
                 <!-- Meta data -->
                 <section class="bg-white rounded-xl shadow p-5 space-y-3 text-sm text-gray-700">
-                    <div class="flex justify-between">
+                    <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-500">Penyelenggara</span>
                         <a
                             href={organizerDetailPath}
-                            class="text-red-600 hover:text-red-700 font-medium transition-colors duration-150"
+                            class="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition-colors duration-150"
                         >
+                            <img
+                                src={competition.organizer?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&h=150&q=80'}
+                                alt={competition.organizer?.name || 'Organizer avatar'}
+                                class="w-6 h-6 rounded-full object-cover"
+                            />
                             {competition.organizer?.name || 'Unknown'}
                         </a>
                     </div>

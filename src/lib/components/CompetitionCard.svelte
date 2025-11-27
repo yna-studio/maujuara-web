@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let competition;
-	export let status: 'progress' | 'ended' | 'closed' = 'progress';
+	export let status: 'open' | 'progress' | 'closed' = 'open';
 
 	const slugify = (value: string) =>
 		value
@@ -26,8 +26,8 @@
 		const deadline = new Date(competition.deadline_date);
 		const announcement = new Date(competition.announcement_date);
 		
-		if (now < deadline) return 'progress';
-		if (now >= deadline && now < announcement) return 'ended';
+		if (now < deadline) return 'open';
+		if (now >= deadline && now < announcement) return 'progress';
 		return 'closed';
 	};
 	
@@ -52,11 +52,11 @@
 >
 	<!-- Status Badge -->
 	<div class="absolute top-3 left-3 z-10">
-		{#if currentStatus === 'progress'}
+		{#if currentStatus === 'open'}
 			<span class="inline-block bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
 				Open
 			</span>
-		{:else if currentStatus === 'ended'}
+		{:else if currentStatus === 'progress'}
 			<span class="inline-block bg-gray-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
 				Berakhir
 			</span>

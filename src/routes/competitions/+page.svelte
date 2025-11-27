@@ -22,7 +22,7 @@
         poster: string;
         deadline_date: string;
         announcement_date: string;
-        status: 'open' | 'ended' | 'closed';
+        status: 'open' | 'progress' | 'closed';
         category: {
             id: string;
             name: string;
@@ -58,15 +58,15 @@
     let error: string | null = null;
 
     // Filter states - initialize from URL parameters
-    $: selectedCategory = $page.url.searchParams.get('category') || '';
-    $: selectedOrganizer = $page.url.searchParams.get('organizer') || '';
-    $: selectedStatus = $page.url.searchParams.get('status') || '';
+    let selectedCategory = '';
+    let selectedOrganizer = '';
+    let selectedStatus = '';
     let showMobileFilters = false;
 
     // Filter options
     const statuses = [
         { value: "open", text: "Open" },
-        { value: "ended", text: "Berlangsung" },
+        { value: "progress", text: "Berlangsung" },
         { value: "closed", text: "Berakhir" }
     ];
 
@@ -76,9 +76,22 @@
     let totalCount = 0;
     let totalPages = 1;
 
+    // Reset to first page when URL parameters change
+    $: if ($page.url.searchParams.toString()) {
+        currentPage = 1;
+        if (browser) {
+            fetchCompetitions();
+        }
+    }
+
     // Fetch data on mount (browser only)
     onMount(async () => {
         if (!browser) return;
+        
+        // Initialize filter states from URL parameters
+        selectedCategory = $page.url.searchParams.get('category') || '';
+        selectedOrganizer = $page.url.searchParams.get('organizer') || '';
+        selectedStatus = $page.url.searchParams.get('status') || '';
         
         await Promise.all([
             fetchCategories(),
@@ -290,7 +303,6 @@
                 <CompetitionCard
                     {competition}
                     status={competition.status === 'open' ? 'progress' : competition.status}
-                    id={competition._id}
                 />
             {/each}
         </div>

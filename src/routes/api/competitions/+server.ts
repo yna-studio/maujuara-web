@@ -26,6 +26,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		// Parse query parameters
 		const search = url.searchParams.get('search') || '';
 		const id_organizer = url.searchParams.get('id_organizer');
+		const id_category = url.searchParams.get('id_category');
 		const status = url.searchParams.get('status');
 		const limitParam = url.searchParams.get('limit');
 		const pageParam = url.searchParams.get('page');
@@ -50,10 +51,10 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 		
 		// Validate status if provided
-		const validStatuses = ['progress', 'ended', 'closed'];
+		const validStatuses = ['open', 'progress', 'closed'];
 		if (status && !validStatuses.includes(status)) {
 			return json({
-				error: 'Invalid status parameter. Must be one of: progress, ended, closed',
+				error: 'Invalid status parameter. Must be one of: open, progress, closed',
 				status: 400
 			}, { status: 400 });
 		}
@@ -62,6 +63,14 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (id_organizer && !ObjectId.isValid(id_organizer)) {
 			return json({
 				error: 'Invalid organizer ID format',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		// Validate category ID if provided
+		if (id_category && !ObjectId.isValid(id_category)) {
+			return json({
+				error: 'Invalid category ID format',
 				status: 400
 			}, { status: 400 });
 		}
@@ -92,12 +101,17 @@ export const GET: RequestHandler = async ({ url }) => {
 			query.organizer = new ObjectId(id_organizer);
 		}
 		
+		// Add category filter
+		if (id_category) {
+			query.category = new ObjectId(id_category);
+		}
+		
 		// Add status filter based on dates
 		const now = new Date();
 		if (status) {
-			if (status === 'progress') {
+			if (status === 'open') {
 				query.deadline_date = { $gt: now.toISOString() };
-			} else if (status === 'ended') {
+			} else if (status === 'progress') {
 				query.deadline_date = { $lte: now.toISOString() };
 				query.announcement_date = { $gt: now.toISOString() };
 			} else if (status === 'closed') {
@@ -141,7 +155,7 @@ export const GET: RequestHandler = async ({ url }) => {
 											{ $gte: [new Date(), '$deadline_date'] },
 											{ $lt: [new Date(), '$announcement_date'] }
 										]},
-										then: 'ended',
+										then: 'progress',
 										else: 'closed'
 									}
 								}
