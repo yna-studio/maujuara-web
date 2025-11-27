@@ -1,35 +1,23 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
     import Button from '$lib/components/Button.svelte';
     import { showSnackbar } from '$lib/stores/snackbar';
+    import { CompetitionAPI } from '$lib/api/competition';
+    import Spinner from '$lib/components/Spinner.svelte';
+    import FullWidthMessage from '$lib/components/FullWidthMessage.svelte';
 
     let competitionId = '';
     let title = '';
     let activeTab: 'regulations' | 'discussions' = 'regulations';
     let showPosterModal = false;
     let showStatusMenu = false;
-
-    // Mocked competition data - replace later with real data from API/DB
-    let competition = {
-        poster:
-            'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYcW-mfR2gkRFGuZWL-_pR6AccArLGWqQdK_gAbgyTW3kjRc6U_HgTJ5of_wuIDy_eENe2Z1NO4ZJpYh5Kg4ef68MvUxSqcViHq9QFZPeUHw-50OYWcgC9u84a528km83haHOApCNA4n6EUG3dSGPn5Oo1mja_QNQN1_3dj9Skbgs6NWiXpccd-PRXHJ8/s614/kompetisi%202024.png',
-        organizer: 'Kreatif Indonesia',
-        organizerId: 'org001',
-        status: 'progress', // progress | closed | ended
-        createdDate: '1 November 2025',
-        deadlineDate: '15 Desember 2025',
-        announcementDate: '20 Desember 2025',
-        views: 1240,
-        applyUrl: 'https://example.com/daftar-kompetisi',
-        instagram: 'https://instagram.com/kreatifindonesia',
-        facebook: 'https://facebook.com/kreatifindonesia',
-        whatsapp: 'https://wa.me/6281234567890',
-        shortDesc:
-            'Ikuti kompetisi seru dari Kreatif Indonesia! Tunjukkan karya terbaikmu dan menangkan hadiah menarik.',
-        contentHtml:
-            '<p>Ikuti kompetisi ini untuk menunjukkan kreativitasmu. Kompetisi terbuka untuk pelajar, mahasiswa, dan umum.</p><p>Pastikan membaca ketentuan kompetisi dengan teliti sebelum mendaftar. Semua karya harus orisinal dan belum pernah dipublikasikan sebelumnya.</p>',
-    };
+    let loading = true;
+    let error: string | null = null;
+    
+    // Competition data from API
+    let competition: any = null;
 
     const slugify = (value: string) =>
         value
@@ -37,19 +25,64 @@
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
 
-    $: organizerDetailPath = `/organizers/detail/${slugify(competition.organizer)}-${competition.organizerId}`;
+    $: organizerDetailPath = competition ? `/organizers/detail/${slugify(competition.organizer.name)}-${competition.organizer.id}` : '';
 
-    $: statusLabel =
-        competition.status === 'progress'
+    $: statusLabel = competition
+        ? competition.status === 'open'
             ? 'Open'
             : competition.status === 'closed'
                 ? 'Berlangsung'
-                : 'Berakhir';
+                : 'Berakhir'
+        : '';
+
+    // Format date for display
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric' 
+        });
+    };
+
+    // Fetch competition data
+    async function fetchCompetition() {
+        try {
+            loading = true;
+            error = null;
+            
+            const response = await CompetitionAPI.getCompetitionById(competitionId);
+            competition = response.data;
+            title = competition.title;
+            
+        } catch (err) {
+            console.error('Failed to fetch competition:', err);
+            error = 'Gagal memuat data kompetisi';
+        } finally {
+            loading = false;
+        }
+    }
+
+    // Load data on mount (browser only)
+    onMount(async () => {
+        if (!browser) return;
+        
+        // Get competition ID from URL
+        const idFromUrl = $page.params.id;
+        if (!idFromUrl) {
+            error = 'ID kompetisi tidak ditemukan';
+            loading = false;
+            return;
+        }
+        
+        competitionId = idFromUrl.split('-')[idFromUrl.split('-').length - 1];
+        await fetchCompetition();
+    });
 
     async function copyInstagramCaption() {
         try {
-            const captionTitle = title || 'Competition Detail';
-            const captionDesc = competition.shortDesc || '';
+            const captionTitle = competition?.title || 'Competition Detail';
+            const captionDesc = competition?.desc || '';
             const captionLink = $page.url.href;
             const caption = `${captionTitle}\n\n${captionDesc}\n\n${captionLink}`;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -66,54 +99,59 @@
             showSnackbar('Failed to copy caption');
         }
     }
-
-    onMount(() => {
-        // Get the ID from the URL
-        const pathSegments = $page.url.pathname.split('/');
-        const idWithTitle = pathSegments[pathSegments.length - 1];
-
-        // Extract the ID (last segment after last dash)
-        const lastDashIndex = idWithTitle.lastIndexOf('-');
-        if (lastDashIndex !== -1) {
-            competitionId = idWithTitle.substring(lastDashIndex + 1);
-            title = idWithTitle.substring(0, lastDashIndex).replace(/-/g, ' ');
-        } else {
-            competitionId = idWithTitle;
-        }
-    });
 </script>
 
 <main class="max-w-5xl mx-auto px-4 py-8">
-    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 capitalize">
-        {title || 'Competition Detail'}
-    </h1>
-    <div style="height:20px"></div>
-    <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Poster -->
-        <div class="w-full lg:w-1/2 lg:sticky lg:top-6 lg:self-start">
-            <button
-                type="button"
-                class="w-full overflow-hidden rounded-xl bg-gray-100 max-h-screen focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                on:click={() => (showPosterModal = true)}
-                aria-label="Perbesar poster kompetisi"
-            >
-                <img
-                    src={competition.poster}
-                    alt={title || 'Competition poster'}
-                    class="w-full h-full object-cover cursor-zoom-in"
-                />
-            </button>
+    <!-- Loading State -->
+    {#if loading}
+        <div class="flex justify-center py-16">
+            <Spinner size="large" color="primary" />
         </div>
+    {:else if error}
+        <div class="py-16">
+            <FullWidthMessage
+                text="Gagal Memuat Kompetisi"
+                subtext={error}
+            />
+        </div>
+    {:else if !competition}
+        <div class="py-16">
+            <FullWidthMessage
+                text="Kompetisi Tidak Ditemukan"
+                subtext="Kompetisi yang Anda cari tidak tersedia atau telah dihapus."
+            />
+        </div>
+    {:else}
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 capitalize">
+            {competition.title || 'Competition Detail'}
+        </h1>
+        <div style="height:20px"></div>
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Poster -->
+            <div class="w-full lg:w-1/2 lg:sticky lg:top-6 lg:self-start">
+                <button
+                    type="button"
+                    class="w-full overflow-hidden rounded-xl bg-gray-100 max-h-screen focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    on:click={() => (showPosterModal = true)}
+                    aria-label="Perbesar poster kompetisi"
+                >
+                    <img
+                        src={competition.poster || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1131&q=80'}
+                        alt={competition.title || 'Competition poster'}
+                        class="w-full h-full object-cover cursor-zoom-in"
+                    />
+                </button>
+            </div>
 
-        <!-- Meta, Hadiah, Content & Button (in tabs) -->
-        <div class="w-full lg:w-1/2 space-y-6">
-            <!-- Status + Actions -->
-            <div class="flex items-center justify-between gap-3">
-                <div class="inline-flex items-center px-3 py-1.5 rounded-full bg-green-50 text-xs sm:text-sm font-semibold text-green-700 border border-green-200">
-                    <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                    <span>{statusLabel}</span>
-                </div>
-                <div class="relative">
+            <!-- Meta, Hadiah, Content & Button (in tabs) -->
+            <div class="w-full lg:w-1/2 space-y-6">
+                <!-- Status + Actions -->
+                <div class="flex items-center justify-between gap-3">
+                    <div class="inline-flex items-center px-3 py-1.5 rounded-full bg-green-50 text-xs sm:text-sm font-semibold text-green-700 border border-green-200">
+                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                        <span>{statusLabel}</span>
+                    </div>
+                    <div class="relative">
                     <button
                         type="button"
                         class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
@@ -180,39 +218,45 @@
                             href={organizerDetailPath}
                             class="text-red-600 hover:text-red-700 font-medium transition-colors duration-150"
                         >
-                            {competition.organizer}
+                            {competition.organizer?.name || 'Unknown'}
                         </a>
                     </div>
                     <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Kategori</span>
+                        <span>{competition.category?.name || 'Uncategorized'}</span>
+                    </div>
+                    <div class="flex justify-between">
                         <span class="font-medium text-gray-500">Tanggal dibuat</span>
-                        <span>{competition.createdDate}</span>
+                        <span>{formatDate(competition.created_date)}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-500">Deadline pendaftaran</span>
-                        <span>{competition.deadlineDate}</span>
+                        <span>{formatDate(competition.deadline_date)}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-500">Pengumuman pemenang</span>
-                        <span>{competition.announcementDate}</span>
+                        <span>{formatDate(competition.announcement_date)}</span>
                     </div>
                     <div class="flex justify-between border-t border-gray-100 pt-3 mt-1">
                         <span class="font-medium text-gray-500">Total views</span>
-                        <span>{competition.views.toLocaleString()}x</span>
+                        <span>{competition.views?.toLocaleString() || '0'}x</span>
                     </div>
                 </section>
 
                 <!-- Hadiah Section -->
                 <section class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800">
                     <h2 class="text-base font-semibold mb-3">Hadiah</h2>
-                    <p class="mb-1">Estimasi Total Hadiah Rp : 50.000</p>
-                    <p>Hadiah:<br />Grand Prize menangkan Pajero Sport Black</p>
+                    {#if competition.prize_estimate}
+                        <p class="mb-1">Estimasi Total Hadiah Rp : {competition.prize_estimate.toLocaleString('id-ID')}</p>
+                    {/if}
+                    <p>{competition.prize_desc || 'Tidak ada informasi hadiah'}</p>
                 </section>
 
                 <!-- Content -->
                 <section class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800">
                     <h2 class="text-base font-semibold mb-3">Deskripsi Kompetisi</h2>
                     <div class="prose prose-sm max-w-none">
-                        {@html competition.contentHtml}
+                        {@html competition.desc || '<p>Tidak ada deskripsi tersedia.</p>'}
                     </div>
                 </section>
 
@@ -220,39 +264,40 @@
                 <section class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800">
                     <h3 class="text-sm font-semibold mb-2">Kontak Penyelenggara</h3>
                     <ul class="space-y-1">
-                        <li>
-                            <span class="font-medium text-gray-600">Instagram:</span>
-                            <a
-                                href={competition.instagram}
-                                class="ml-1 text-red-600 hover:text-red-700"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {competition.instagram}
-                            </a>
-                        </li>
-                        <li>
-                            <span class="font-medium text-gray-600">Facebook:</span>
-                            <a
-                                href={competition.facebook}
-                                class="ml-1 text-red-600 hover:text-red-700"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {competition.facebook}
-                            </a>
-                        </li>
-                        <li>
-                            <span class="font-medium text-gray-600">WhatsApp:</span>
-                            <a
-                                href={competition.whatsapp}
-                                class="ml-1 text-red-600 hover:text-red-700"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {competition.whatsapp}
-                            </a>
-                        </li>
+                        {#each competition.contacts || [] as contact}
+                            <li>
+                                <span class="font-medium text-gray-600 capitalize">{contact.type}:</span>
+                                {#if contact.type === 'email'}
+                                    <a
+                                        href="mailto:{contact.value}"
+                                        class="ml-1 text-red-600 hover:text-red-700"
+                                    >
+                                        {contact.value}
+                                    </a>
+                                {:else if contact.type === 'phone' || contact.type === 'whatsapp'}
+                                    <a
+                                        href="https://wa.me/{contact.value.replace(/[^0-9+]/g, '')}"
+                                        class="ml-1 text-red-600 hover:text-red-700"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {contact.value}
+                                    </a>
+                                {:else}
+                                    <a
+                                        href={contact.value}
+                                        class="ml-1 text-red-600 hover:text-red-700"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {contact.value}
+                                    </a>
+                                {/if}
+                            </li>
+                        {/each}
+                        {#if !competition.contacts || competition.contacts.length === 0}
+                            <li class="text-gray-500">Tidak ada informasi kontak tersedia</li>
+                        {/if}
                     </ul>
                 </section>
 
@@ -261,7 +306,9 @@
                     <Button
                         text="Ikuti Kompetisi"
                         type="link"
-                        href={competition.applyUrl}
+                        href={competition.link_join || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         variant="large"
                         size="full"
                     />
@@ -274,6 +321,7 @@
             {/if}
         </div>
     </div>
+    {/if}
 </main>
 
 {#if showPosterModal}

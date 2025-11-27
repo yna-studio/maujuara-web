@@ -27,7 +27,7 @@
 				class="flex flex-col items-center min-w-[110px] snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
 			>
 				<div
-					class="w-24 h-24 rounded-full border-[6px] border-red-500 bg-center bg-cover bg-no-repeat shadow-sm"
+					class="w-24 h-24 rounded-full border-[4px] border-red-500 bg-center bg-cover bg-no-repeat shadow-sm"
 					style={`background-image: url('${organizer.avatar || organizer.image || '/placeholder-avatar.png'}')`}
 				>
 				</div>

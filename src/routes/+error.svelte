@@ -8,18 +8,24 @@
     <p class="text-sm font-medium tracking-wide text-red-500 mb-3">
       {$page.status === 404
         ? "404. Not found"
-        : `${$page.status || "Error"}. Not available`}
+        : `${$page.status || "500"}. Error`}
     </p>
     <h1
       class="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-gray-900 mb-4"
     >
-      Page Not Available
+      {$page.status === 404
+        ? "Halaman Tidak Ditemukan"
+        : "Terjadi Masalah"}
     </h1>
     <div
       class="text-sm sm:text-base text-gray-500 mb-6 max-w-xl mx-auto space-y-2"
     >
-      <p>Halaman yang kamu cari tidak tersedia atau sudah dipindahkan.</p>
-      <p>Silakan periksa kembali URL atau kembali ke halaman utama.</p>
+      {#if $page.status === 404}
+        <p>Halaman yang kamu cari tidak tersedia atau sudah dipindahkan.</p>
+        <p>Silakan periksa kembali URL atau kembali ke halaman utama.</p>
+      {:else}
+        <p>Silahkan coba beberapa saat lagi</p>
+      {/if}
     </div>
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-3">

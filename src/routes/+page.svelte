@@ -36,7 +36,7 @@
 		try {
 			const [competitionsResponse, organizersResponse] = await Promise.all([
 				CompetitionsAPI.getCompetitions(9),
-				OrganizersAPI.getOrganizers()
+				OrganizersAPI.getOrganizersWithLimit(10, 'updated_at')
 			]);
 			competitions = competitionsResponse.data;
 			organizers = organizersResponse.data;

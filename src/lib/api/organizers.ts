@@ -13,9 +13,13 @@ export class OrganizersAPI {
         return response.data;
     }
 
-    // Get organizers with limit
-    static async getOrganizersWithLimit(limit: number): Promise<OrganizersResponse> {
-        return apiCaller.get<OrganizersResponse>('/organizers', { limit });
+    // Get organizers with limit and orderBy
+    static async getOrganizersWithLimit(limit: number, orderBy?: string): Promise<OrganizersResponse> {
+        const params: Record<string, any> = { limit };
+        if (orderBy) {
+            params.orderBy = orderBy;
+        }
+        return apiCaller.get<OrganizersResponse>('/organizers', params);
     }
 }
 

@@ -1,171 +1,195 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { browser } from "$app/environment";
+    import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
     import CompetitionCard from "$lib/components/CompetitionCard.svelte";
     import Subtitle from "$lib/components/Subtitle.svelte";
     import Button from "$lib/components/Button.svelte";
     import FullWidthMessage from "$lib/components/FullWidthMessage.svelte";
     import Spinner from "$lib/components/Spinner.svelte";
+    import SearchableSelect from "$lib/components/SearchableSelect.svelte";
 
-    // Sample data - replace with your actual data source
-    const competitions = [
-        {
-            id: "1",
-            poster: "🎨",
-            title: "Kompetisi Desain Grafis Digital 2025",
-            endDate: "15 Desember 2025",
-            organizer: "Kreatif Indonesia",
-            prize: "Rp 25.000.000",
-            category: "Desain",
-            status: "progress",
-        },
-        {
-            id: "2",
-            poster: "📸",
-            title: "Kompetisi Fotografi Landscape",
-            endDate: "20 Desember 2025",
-            organizer: "Fotografi Nusantara",
-            prize: "Rp 15.000.000",
-            category: "Fotografi",
-            status: "progress",
-        },
-        // Add 7 more sample competitions
-        {
-            id: "3",
-            poster: "💻",
-            title: "Hackathon Nasional 2025",
-            endDate: "10 Januari 2026",
-            organizer: "Tech Indonesia",
-            prize: "Rp 50.000.000",
-            category: "Teknologi",
-            status: "progress",
-        },
-        {
-            id: "4",
-            poster: "🎭",
-            title: "Kompetisi Teater Remaja",
-            endDate: "5 Desember 2025",
-            organizer: "Seni Budaya Nusantara",
-            prize: "Rp 10.000.000",
-            category: "Seni Pertunjukan",
-            status: "progress",
-        },
-        {
-            id: "5",
-            poster: "✏️",
-            title: "Kompetisi Menulis Cerpen",
-            endDate: "30 November 2025",
-            organizer: "Sastra Indonesia",
-            prize: "Rp 8.000.000",
-            category: "Menulis",
-            status: "progress",
-        },
-        {
-            id: "6",
-            poster: "🎵",
-            title: "Kompetisi Musik Tradisional",
-            endDate: "15 Januari 2026",
-            organizer: "Kementerian Pendidikan",
-            prize: "Rp 30.000.000",
-            category: "Musik",
-            status: "progress",
-        },
-        {
-            id: "7",
-            poster: "🎮",
-            title: "Turnamen E-Sport Mobile Legends",
-            endDate: "20 Januari 2026",
-            organizer: "GameOn Indonesia",
-            prize: "Rp 75.000.000",
-            category: "E-Sport",
-            status: "progress",
-        },
-        {
-            id: "8",
-            poster: "🍳",
-            title: "Kompetisi Masak Nusantara",
-            endDate: "10 Desember 2025",
-            organizer: "Kuliner Indonesia",
-            prize: "Rp 20.000.000",
-            category: "Kuliner",
-            status: "progress",
-        },
-        {
-            id: "9",
-            poster: "📱",
-            title: "Aplikasi Inovasi Digital",
-            endDate: "25 Desember 2025",
-            organizer: "Kominfo",
-            prize: "Rp 100.000.000",
-            category: "Teknologi",
-            status: "progress",
-        },
-    ];
+    // API imports
+    import { CompetitionsAPI } from "$lib/api/competitions";
+    import { CategoriesAPI } from "$lib/api/categories";
+    import { OrganizersListAPI } from "$lib/api/organizersList";
 
-    // Filter states
-    let selectedCategory = "";
-    let selectedOrganizer = "";
-    let selectedStatus = "";
+    // Type definitions
+    interface Competition {
+        _id: string;
+        title: string;
+        poster: string;
+        deadline_date: string;
+        announcement_date: string;
+        status: 'open' | 'ended' | 'closed';
+        category: {
+            id: string;
+            name: string;
+        };
+        organizer: {
+            id: string;
+            name: string;
+            avatar: string;
+        };
+        prize_desc: string;
+        prize_estimate?: number;
+        desc: string;
+        contacts: Array<{
+            type: string;
+            value: string;
+        }>;
+        link_join: string;
+        created_date: string;
+        updated_date: string;
+        views: number;
+    }
+
+    interface Category {
+        id: string;
+        name: string;
+    }
+
+    // Data states
+    let competitions: Competition[] = [];
+    let categories: Category[] = [];
+    let organizers: Array<{ id: string; name: string }> = [];
+    let loading = browser; // Only show loading state in browser
+    let error: string | null = null;
+
+    // Filter states - initialize from URL parameters
+    $: selectedCategory = $page.url.searchParams.get('category') || '';
+    $: selectedOrganizer = $page.url.searchParams.get('organizer') || '';
+    $: selectedStatus = $page.url.searchParams.get('status') || '';
     let showMobileFilters = false;
 
-    // Get unique values for filters
-    const categories = [...new Set(competitions.map((c) => c.category))];
-    const organizers = [...new Set(competitions.map((c) => c.organizer))];
-    const statuses = ["Open", "Berlangsung", "Berakhir"];
+    // Filter options
+    const statuses = [
+        { value: "open", text: "Open" },
+        { value: "ended", text: "Berlangsung" },
+        { value: "closed", text: "Berakhir" }
+    ];
 
-    // Filtered competitions
-    $: filteredCompetitions = competitions.filter((comp) => {
-        let matches = true;
-        if (selectedCategory)
-            matches = matches && comp.category === selectedCategory;
-        if (selectedOrganizer)
-            matches = matches && comp.organizer === selectedOrganizer;
-        if (selectedStatus) {
-            if (selectedStatus === "Open")
-                matches = matches && comp.status === "progress";
-            else if (selectedStatus === "Berlangsung")
-                matches = matches && comp.status === "closed";
-            else if (selectedStatus === "Berakhir")
-                matches = matches && comp.status === "ended";
-        }
-        return matches;
+    // Pagination
+    let currentPage = 1;
+    const itemsPerPage = 9;
+    let totalCount = 0;
+    let totalPages = 1;
+
+    // Fetch data on mount (browser only)
+    onMount(async () => {
+        if (!browser) return;
+        
+        await Promise.all([
+            fetchCategories(),
+            fetchOrganizers(),
+            fetchCompetitions()
+        ]);
     });
 
-    // Infinite scroll state
-    let loading = false;
-    let page = 1;
-    const itemsPerPage = 9;
+    async function fetchCategories() {
+        try {
+            const response = await CategoriesAPI.getCategories();
+            categories = response.data;
+        } catch (err) {
+            console.error('Failed to fetch categories:', err);
+        }
+    }
+
+    async function fetchOrganizers() {
+        try {
+            const response = await OrganizersListAPI.getAllOrganizers();
+            organizers = response.data.map(org => ({
+                id: org.id,
+                name: org.name
+            }));
+        } catch (err) {
+            console.error('Failed to fetch organizers:', err);
+        }
+    }
+
+    async function fetchCompetitions() {
+        try {
+            loading = true;
+            const params: Record<string, any> = {
+                limit: itemsPerPage,
+                page: currentPage
+            };
+
+            // Use URL parameters for filtering
+            const urlParams = new URLSearchParams($page.url.searchParams);
+            if (urlParams.get('category')) params.id_category = urlParams.get('category');
+            if (urlParams.get('organizer')) params.id_organizer = urlParams.get('organizer');
+            if (urlParams.get('status')) params.status = urlParams.get('status');
+
+            const response = await CompetitionsAPI.getCompetitions(params);
+            competitions = response.data;
+            totalCount = response.meta?.totalCount || 0;
+            totalPages = response.meta?.totalPages || 1;
+        } catch (err) {
+            console.error('Failed to fetch competitions:', err);
+            error = 'Gagal memuat kompetisi';
+        } finally {
+            loading = false;
+        }
+    }
+
+    // Filter redirect function
+    function applyFilters() {
+        const urlParams = new URLSearchParams();
+        
+        if (selectedCategory) {
+            urlParams.set('category', selectedCategory);
+        }
+        
+        if (selectedOrganizer) {
+            urlParams.set('organizer', selectedOrganizer);
+            // Add organizer name for display
+            const organizer = organizers.find(org => org.id === selectedOrganizer);
+            if (organizer) {
+                urlParams.set('organizer_name', organizer.name);
+            }
+        }
+        
+        if (selectedStatus) {
+            urlParams.set('status', selectedStatus);
+        }
+        
+        // Build new URL
+        const newUrl = urlParams.toString() ? `/competitions?${urlParams.toString()}` : '/competitions';
+        
+        // Redirect
+        goto(newUrl);
+    }
+
+    // Reset to first page when filters change (handled by URL params)
+    // Removed reactive statement since we're using URL-based filtering
+
+    // Load more function for pagination
+    async function loadMore() {
+        if (loading || currentPage >= totalPages) return;
+        
+        currentPage++;
+        await fetchCompetitions();
+    }
 
     // Handle scroll for infinite loading
-    onMount(() => {
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    });
-
     function handleScroll() {
-        if (loading) return;
+        if (!browser || loading || currentPage >= totalPages) return;
 
-        const { scrollTop, scrollHeight, clientHeight } =
-            document.documentElement;
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
         if (scrollTop + clientHeight >= scrollHeight - 100) {
             loadMore();
         }
     }
 
-    function loadMore() {
-        loading = true;
-        // Simulate API call
-        setTimeout(() => {
-            page++;
-            loading = false;
-        }, 1000);
-    }
-
-    // Reset to first page when filters change
-    $: {
-        if (selectedCategory || selectedOrganizer || selectedStatus) {
-            page = 1;
-        }
-    }
+    // Add scroll listener (browser only)
+    onMount(() => {
+        if (!browser) return;
+        
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    });
 </script>
 
 <main class="max-w-5xl mx-auto px-4 py-8">
@@ -201,7 +225,7 @@
                 >
                     <option value="">Semua Kategori</option>
                     {#each categories as category}
-                        <option value={category}>{category}</option>
+                        <option value={category.id}>{category.name}</option>
                     {/each}
                 </select>
             </div>
@@ -209,16 +233,12 @@
             <!-- Organizer Filter -->
             <div>
                 <label for="organizer" class="block text-sm font-medium text-gray-700 mb-2">Penyelenggara</label>
-                <select 
+                <SearchableSelect
                     id="organizer"
                     bind:value={selectedOrganizer}
-                    class="filter-select w-full sm:w-48 rounded-lg px-4 py-3 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm h-12"
-                >
-                    <option value="">Semua Penyelenggara</option>
-                    {#each organizers as organizer}
-                        <option value={organizer}>{organizer}</option>
-                    {/each}
-                </select>
+                    options={organizers}
+                    placeholder="Cari penyelenggara..."
+                />
             </div>
 
             <!-- Status Filter -->
@@ -231,7 +251,7 @@
                 >
                     <option value="">Semua Status</option>
                     {#each statuses as status}
-                        <option value={status}>{status}</option>
+                        <option value={status.value}>{status.text}</option>
                     {/each}
                 </select>
             </div>
@@ -241,32 +261,55 @@
             size="auto"
             variant="small"
             text="Filter"
+            on:click={applyFilters}
         />
     </div>
 
     <!-- Competitions Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {#each filteredCompetitions.slice(0, page * itemsPerPage) as competition}
-            <CompetitionCard
-                {competition}
-                status={competition.status}
-                id={competition.id}
+    {#if loading && competitions.length === 0}
+        <div class="flex justify-center py-8">
+            <Spinner size="large" color="primary" />
+        </div>
+    {:else if error}
+        <div class="py-8">
+            <FullWidthMessage
+                text="Gagal memuat kompetisi"
+                subtext={error}
             />
-        {/each}
-    </div>
+        </div>
+    {:else if competitions.length === 0}
+        <div class="py-8">
+            <FullWidthMessage
+                text="Kompetisi tidak ditemukan"
+                subtext="Coba ubah filter atau hapus beberapa pilihan untuk melihat kompetisi lainnya."
+            />
+        </div>
+    {:else}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {#each competitions as competition}
+                <CompetitionCard
+                    {competition}
+                    status={competition.status === 'open' ? 'progress' : competition.status}
+                    id={competition._id}
+                />
+            {/each}
+        </div>
 
-    <!-- Loading Spinner -->
-    <div class="flex justify-center py-8">
-        <Spinner size="large" color="primary" />
-    </div>
-
-    <!-- No Results -->
-    <div class="py-8">
-        <FullWidthMessage
-            text="Kompetisi tidak ditemukan"
-            subtext="Coba ubah filter atau hapus beberapa pilihan untuk melihat kompetisi lainnya."
-        />
-    </div>
+        <!-- Load More Button / Loading -->
+        {#if loading}
+            <div class="flex justify-center py-8">
+                <Spinner size="large" color="primary" />
+            </div>
+        {:else if currentPage < totalPages}
+            <div class="flex justify-center py-8">
+                <Button 
+                    text="Muat Lebih Banyak" 
+                    on:click={loadMore}
+                    variant="large"
+                />
+            </div>
+        {/if}
+    {/if}
 </main>
 
 <style>

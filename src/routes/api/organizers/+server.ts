@@ -37,7 +37,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		
 		// Build query
 		const query = {};
-		const sort = { [orderByField]: -1 }; // Sort by specified field in descending order
+		const sort: Record<string, 1 | -1> = { [orderByField]: -1 }; // Sort by specified field in descending order
 		
 		// Execute query
 		const organizers = await organizersCollection
@@ -72,6 +72,76 @@ export const GET: RequestHandler = async ({ url }) => {
 		
 		return json({
 			error: 'Failed to fetch organizers from database',
+			message: error instanceof Error ? error.message : 'Unknown error',
+			status: 500
+		}, { status: 500 });
+	}
+};
+
+export const POST: RequestHandler = async ({ request }) => {
+	try {
+		// Parse request body
+		const body = await request.json();
+		const { name, avatar } = body;
+		
+		// Validate required fields
+		if (!name || typeof name !== 'string' || name.trim() === '') {
+			return json({
+				error: 'Name is required and must be a non-empty string',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		if (!avatar || typeof avatar !== 'string' || avatar.trim() === '') {
+			return json({
+				error: 'Avatar is required and must be a non-empty string',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		// Get MongoDB connection
+		const uri = getMongoUri();
+		
+		const client = new MongoClient(uri, {
+			serverSelectionTimeoutMS: 10000,
+			connectTimeoutMS: 10000
+		} as MongoClientOptions);
+		
+		// Connect to database
+		await client.connect();
+		const db = client.db();
+		const organizersCollection = db.collection('organizers');
+		
+		// Create new organizer document
+		const currentTime = new Date().toISOString();
+		const newOrganizer = {
+			name: name.trim(),
+			avatar: avatar.trim(),
+			created_at: currentTime,
+			updated_at: currentTime
+		};
+		
+		// Insert into database
+		const result = await organizersCollection.insertOne(newOrganizer);
+		
+		// Close connection
+		await client.close();
+		
+		// Return the created organizer with its ID
+		return json({
+			data: {
+				_id: result.insertedId.toString(),
+				...newOrganizer
+			},
+			status: 201,
+			message: 'Organizer created successfully'
+		}, { status: 201 });
+		
+	} catch (error) {
+		console.error('Failed to create organizer:', error);
+		
+		return json({
+			error: 'Failed to create organizer',
 			message: error instanceof Error ? error.message : 'Unknown error',
 			status: 500
 		}, { status: 500 });
