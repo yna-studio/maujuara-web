@@ -46,12 +46,14 @@
 
 	// Format currency for display
 	const formatCurrency = (num: number): string => {
-		if (num >= 1000000000) {
-			return 'Rp ' + (num / 1000000000).toFixed(1) + 'B';
+		if (num >= 1000000000000) {
+			return 'Rp ' + (num / 1000000000000).toFixed(1) + 'T';
+		} else if (num >= 1000000000) {
+			return 'Rp ' + (num / 1000000000).toFixed(1) + 'M';
 		} else if (num >= 1000000) {
-			return 'Rp ' + (num / 1000000).toFixed(1) + 'M';
+			return 'Rp ' + (num / 1000000).toFixed(1) + 'JT';
 		} else if (num >= 1000) {
-			return 'Rp ' + (num / 1000).toFixed(1) + 'K';
+			return 'Rp ' + (num / 1000).toFixed(1) + 'RB';
 		}
 		return 'Rp ' + num.toString();
 	};
