@@ -61,13 +61,13 @@ export const GET: RequestHandler = async ({ params }) => {
 					$addFields: {
 						status: {
 							$cond: {
-								if: { $lt: [new Date(), '$deadline_date'] },
+								if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
 								then: 'open',
 								else: {
 									$cond: {
 										if: { $and: [
-											{ $gte: [new Date(), '$deadline_date'] },
-											{ $lt: [new Date(), '$announcement_date'] }
+											{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
+											{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
 										]},
 										then: 'progress',
 										else: 'ended'

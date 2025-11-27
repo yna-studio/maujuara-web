@@ -270,7 +270,9 @@
                     {#if competition.prize_estimate}
                         <p class="mb-1">Estimasi Total Hadiah Rp : {competition.prize_estimate.toLocaleString('id-ID')}</p>
                     {/if}
-                    <p>{competition.prize_desc || 'Tidak ada informasi hadiah'}</p>
+                    <div class="prose prose-sm max-w-none">
+                        {@html competition.prize_desc || '<p>Tidak ada informasi hadiah</p>'}
+                    </div>
                 </section>
 
                 <!-- Content -->
