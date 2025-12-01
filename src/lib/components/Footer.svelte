@@ -53,6 +53,38 @@
 			</a>
 		</div>
 		
+		<!-- Y&A Studio Products -->
+		<div class="flex justify-center space-x-6 mb-4">
+			<span class="text-sm font-semibold text-gray-700">Y&A Studio Products:</span>
+			<a 
+				href="https://maugowes.com" 
+				target="_blank" 
+				rel="dofollow"
+				class="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+				aria-label="MauGowes"
+			>
+				MauGowes
+			</a>
+			<a 
+				href="https://maucoding.com" 
+				target="_blank" 
+				rel="dofollow"
+				class="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+				aria-label="MauCoding"
+			>
+				MauCoding
+			</a>
+			<a 
+				href="https://follooow.com" 
+				target="_blank" 
+				rel="dofollow"
+				class="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+				aria-label="Follooow"
+			>
+				Follooow
+			</a>
+		</div>
+		
 		<!-- Copyright -->
 		<p class="text-center text-sm text-gray-600">
 			Made by Y&A Studio, copyright 2025
