@@ -4,20 +4,23 @@
     import { browser } from '$app/environment';
     import Button from '$lib/components/Button.svelte';
     import { showSnackbar } from '$lib/stores/snackbar';
-    import { CompetitionAPI } from '$lib/api/competition';
     import Spinner from '$lib/components/Spinner.svelte';
     import FullWidthMessage from '$lib/components/FullWidthMessage.svelte';
+    import type { PageData } from './$types';
+
+    export let data: PageData;
 
     let competitionId = '';
     let title = '';
     let activeTab: 'regulations' | 'discussions' = 'regulations';
     let showPosterModal = false;
     let showStatusMenu = false;
-    let loading = true;
+    let loading = false; // Changed to false since data is loaded on server
     let error: string | null = null;
     
-    // Competition data from API
-    let competition: any = null;
+    // Competition data from layout
+    let competition = (data as any)?.competition || null;
+    error = (data as any)?.error || null;
 
     const slugify = (value: string) =>
         value
@@ -53,38 +56,20 @@
         });
     };
 
-    // Fetch competition data
-    async function fetchCompetition() {
-        try {
-            loading = true;
-            error = null;
-            
-            const response = await CompetitionAPI.getCompetitionById(competitionId);
-            competition = response.data;
-            title = competition.title;
-            
-        } catch (err) {
-            console.error('Failed to fetch competition:', err);
-            error = 'Gagal memuat data kompetisi';
-        } finally {
-            loading = false;
-        }
-    }
-
-    // Load data on mount (browser only)
+    // Load data on mount (browser only) - only for client-side specific logic
     onMount(async () => {
         if (!browser) return;
         
-        // Get competition ID from URL
+        // Get competition ID from URL for client-side operations
         const idFromUrl = $page.params.id;
-        if (!idFromUrl) {
-            error = 'ID kompetisi tidak ditemukan';
-            loading = false;
-            return;
+        if (idFromUrl) {
+            competitionId = idFromUrl.split('-')[idFromUrl.split('-').length - 1];
         }
         
-        competitionId = idFromUrl.split('-')[idFromUrl.split('-').length - 1];
-        await fetchCompetition();
+        // Set title if competition exists
+        if (competition) {
+            title = competition.title;
+        }
     });
 
     async function copyInstagramCaption() {
@@ -139,7 +124,7 @@
         </div>
     {:else}
         <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 capitalize">
-            {competition.title || 'Competition Detail'}
+            {title || competition.title || 'Competition Detail'}
         </h1>
         <div style="height:20px"></div>
         <div class="flex flex-col lg:flex-row gap-8">
@@ -427,7 +412,7 @@
             class="relative max-w-3xl w-full"
             role="dialog"
             aria-modal="true"
-            aria-label={title || 'Poster kompetisi'}
+            aria-label={title || competition.title || 'Poster kompetisi'}
             tabindex="-1"
             on:click|stopPropagation
             on:keydown={(event) => {
@@ -447,7 +432,7 @@
             <div class="rounded-xl bg-black flex items-center justify-center max-h-[90vh]">
                 <img
                     src={competition.poster}
-                    alt={title || 'Competition poster'}
+                    alt={title || competition.title || 'Competition poster'}
                     class="max-h-[90vh] w-auto object-contain bg-black"
                 />
             </div>
