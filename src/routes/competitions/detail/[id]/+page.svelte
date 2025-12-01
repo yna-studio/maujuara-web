@@ -317,6 +317,29 @@
                     text-indent: 0;
                 }
 
+                /* Nested lists styling */
+                .competition-description ol ol,
+                .competition-description ul ul {
+                    margin-top: 0.5rem;
+                    margin-left: 2rem;
+                }
+
+                .competition-description ol ol li,
+                .competition-description ul ul li {
+                    margin-bottom: 0.25rem;
+                }
+
+                .competition-description ol ul,
+                .competition-description ul ol {
+                    margin-top: 0.5rem;
+                    margin-left: 2rem;
+                }
+
+                .competition-description ol ul li,
+                .competition-description ul ol li {
+                    margin-bottom: 0.25rem;
+                }
+
                 .competition-description a {
                     color: rgb(239 68 68) !important; /* red-600 */
                     text-decoration: underline;
