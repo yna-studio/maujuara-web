@@ -88,6 +88,16 @@
 		})}
 	</script>
 	
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-T5PG1WN7NZ"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-T5PG1WN7NZ');
+	</script>
+	
 	<!-- Facebook SDK for Comments -->
 	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/id_ID/sdk.js#xfbml=1&version=v19.0&appId=1419514554927551" nonce="random"></script>
 </svelte:head>
