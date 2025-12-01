@@ -75,7 +75,7 @@
     async function copyInstagramCaption() {
         try {
             const captionTitle = competition?.title || 'Competition Detail';
-            const captionDesc = competition?.desc ? stripHtml(competition.desc) + '...' : '';
+            const captionDesc = competition?.desc ? getFirstParagraph(competition.desc) + '...' : '';
             const captionLink = $page.url.href;
             const caption = `${captionTitle}\n\n${captionDesc}\n\n${captionLink}`;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -91,6 +91,32 @@
             showStatusMenu = false;
             showSnackbar('Failed to copy caption');
         }
+    }
+
+    // Function to get first text content from HTML
+    function getFirstParagraph(html: string): string {
+        // Create a temporary div element to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Get all text content from the entire HTML
+        const allText = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Get the first meaningful text (up to first sentence or 150 characters)
+        const trimmedText = allText.trim();
+        
+        if (trimmedText.length === 0) {
+            return '';
+        }
+        
+        // Try to find first sentence (ending with . ! ?)
+        const firstSentenceMatch = trimmedText.match(/^[^.!?]*[.!?]/);
+        if (firstSentenceMatch && firstSentenceMatch[0].length <= 300) {
+            return firstSentenceMatch[0].trim();
+        }
+        
+        // If no sentence found or too long, get first 300 characters
+        return trimmedText.substring(0, 300).trim();
     }
 
     // Function to strip HTML tags from string
