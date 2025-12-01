@@ -3,6 +3,9 @@ import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export const load: LayoutServerLoad = async ({ params, parent }) => {
+    // Get parent data (root layout SEO defaults)
+    const parentData = await parent();
+    
     try {
         // Get competition ID from URL
         const idFromUrl = params.id;
@@ -35,13 +38,13 @@ export const load: LayoutServerLoad = async ({ params, parent }) => {
         
         const competition = result.data;
         
-        // Generate SEO metadata
-        const title = competition.title || 'Kompetisi Detail';
-        const description = competition.desc ? 
+        // Generate SEO metadata (override defaults with competition-specific data)
+        const title = competition?.title || parentData.seo.defaultTitle;
+        const description = competition?.desc ? 
             competition.desc.replace(/<[^>]*>/g, '').substring(0, 160) + '...' : 
-            'Temukan informasi lengkap tentang kompetisi ini, termasuk hadiah, deadline, dan cara pendaftaran.';
+            parentData.seo.defaultDescription;
         
-        const currentUrl = `${host}/competitions/detail/${idFromUrl}`;
+        const currentUrl = competition ? `${host}/competitions/detail/${idFromUrl}` : host;
         
         return {
             competition,
@@ -49,32 +52,36 @@ export const load: LayoutServerLoad = async ({ params, parent }) => {
                 title,
                 description,
                 url: currentUrl,
-                image: competition.poster,
-                type: 'article',
-                siteName: 'Maujuara',
-                author: competition.organizer?.name || 'Maujuara',
-                publishedTime: competition.created_date,
-                modifiedTime: competition.updated_date,
-                category: competition.category?.name || 'Kompetisi'
+                image: competition?.poster || parentData.seo.defaultImage,
+                type: competition ? 'article' : 'website',
+                siteName: parentData.seo.siteName,
+                author: competition?.organizer?.name || parentData.seo.siteName,
+                publishedTime: competition?.created_date || '',
+                modifiedTime: competition?.updated_date || '',
+                category: competition?.category?.name || 'Kompetisi',
+                twitterHandle: parentData.seo.twitterHandle,
+                host: parentData.seo.host
             }
         };
     } catch (err) {
         console.error('Failed to fetch competition on server:', err);
         
-        // Return error state for client-side handling
+        // Return error state with default SEO metadata from parent
         return {
             competition: null,
             seo: {
-                title: 'Kompetisi Tidak Ditemukan',
-                description: 'Kompetisi yang Anda cari tidak tersedia atau telah dihapus.',
-                url: '',
-                image: '',
+                title: parentData.seo.defaultTitle,
+                description: parentData.seo.defaultDescription,
+                url: parentData.seo.host,
+                image: parentData.seo.defaultImage,
                 type: 'website',
-                siteName: 'Maujuara',
-                author: 'Maujuara',
+                siteName: parentData.seo.siteName,
+                author: parentData.seo.siteName,
                 publishedTime: '',
                 modifiedTime: '',
-                category: ''
+                category: '',
+                twitterHandle: parentData.seo.twitterHandle,
+                host: parentData.seo.host
             }
         };
     }

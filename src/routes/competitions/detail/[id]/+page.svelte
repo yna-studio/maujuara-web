@@ -163,7 +163,7 @@
                     </button>
                     {#if showStatusMenu}
                         <div
-                            class="absolute right-0 mt-2 w-44 rounded-md bg-white shadow-lg ring-1 ring-black/5 z-10 text-xs sm:text-sm"
+                            class="absolute right-0 mt-2 w-44 rounded-md bg-white shadow-lg ring-1 ring-black/5 z-10 text-sm"
                         >
                             <button
                                 type="button"
@@ -195,7 +195,7 @@
                     }`}
                     on:click={() => (activeTab = 'regulations')}
                 >
-                    Regulations
+                    Regulasi
                 </button>
                 <button
                     type="button"
@@ -206,7 +206,7 @@
                     }`}
                     on:click={() => (activeTab = 'discussions')}
                 >
-                    Discussions
+                    Komentar
                 </button>
             </div>
 
@@ -384,9 +384,27 @@
                     />
                 </div>
             {:else}
-                <!-- Discussions Tab (empty content for now) -->
-                <section class="bg-white rounded-xl shadow p-5 text-sm text-gray-700 min-h-[120px] flex items-center justify-center">
-                    <p class="text-gray-400">Belum ada diskusi.</p>
+                <!-- Discussions Tab with Facebook Comments -->
+                <section class="bg-white rounded-xl shadow p-5 text-sm text-gray-700">
+                    <h3 class="text-sm font-semibold mb-4">Komentar</h3>
+                    
+                    <!-- Facebook Comments Plugin -->
+                    <div id="fb-root"></div>
+                    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/id_ID/sdk.js#xfbml=1&version=v19.0&appId=1419514554927551"></script>
+                    
+                    <div 
+                        class="fb-comments" 
+                        data-href={$page.url.href}
+                        data-width="100%"
+                        data-numposts="10"
+                        data-order-by="reverse_time"
+                        data-lazy="true"
+                    ></div>
+                    
+                    <!-- Fallback message -->
+                    <p class="text-gray-500 text-xs mt-4">
+                        Jika komentar tidak muncul, silakan refresh halaman atau periksa koneksi internet Anda.
+                    </p>
                 </section>
             {/if}
         </div>

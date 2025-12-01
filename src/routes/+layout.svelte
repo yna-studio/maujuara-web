@@ -4,6 +4,9 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import { page } from '$app/stores';
 	import { snackbar } from '$lib/stores/snackbar';
+	import type { LayoutData } from './$types';
+	
+	export let data: LayoutData;
 
 	// Build simple breadcrumb from current path
 	$: segments = $page.url.pathname.split('/').filter(Boolean);
@@ -18,7 +21,76 @@
 			href: '/' + segments.slice(0, index + 1).join('/'),
 		}))
 	];
+	
+	// Default SEO metadata
+	$: defaultTitle = data.seo?.defaultTitle || 'MauJuara - Ikuti dan menangkan hadiah dari kompetisi online';
+	$: defaultDescription = data.seo?.defaultDescription || 'MauJuara adalah platform kompetisi online yang bisa diikuti seluruh netizen, pilih kategori favoritmu dan menangkan hadiahnya';
+	$: defaultImage = data.seo?.defaultImage || 'https://maujuara.com/images/Mau%20Juara%20-%20landscape.svg';
+	$: siteName = data.seo?.siteName || 'Maujuara';
+	$: twitterHandle = data.seo?.twitterHandle || '@maujuara';
+	$: host = data.seo?.host || 'http://localhost:20251';
 </script>
+
+<svelte:head>
+	<!-- Basic Meta Tags -->
+	<title>{defaultTitle}</title>
+	<meta name="description" content={defaultDescription} />
+	<meta name="keywords" content="kompetisi, lomba, kontes, online, hadiah, indonesia" />
+	<meta name="author" content={siteName} />
+	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={defaultTitle} />
+	<meta property="og:description" content={defaultDescription} />
+	<meta property="og:url" content={host} />
+	<meta property="og:image" content={defaultImage} />
+	<meta property="og:image:alt" content={defaultTitle} />
+	<meta property="og:site_name" content={siteName} />
+	<meta property="og:locale" content="id_ID" />
+	
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={defaultTitle} />
+	<meta name="twitter:description" content={defaultDescription} />
+	<meta name="twitter:image" content={defaultImage} />
+	<meta name="twitter:image:alt" content={defaultTitle} />
+	<meta name="twitter:site" content={twitterHandle} />
+	<meta name="twitter:creator" content={twitterHandle} />
+	
+	<!-- Additional SEO Meta Tags -->
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+	<link rel="canonical" href={host} />
+	
+	<!-- Favicon -->
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	
+	<!-- Schema.org JSON-LD -->
+	<script type="application/ld+json">
+		{JSON.stringify({
+			"@context": "https://schema.org",
+			"@type": "WebSite",
+			"name": siteName,
+			"description": defaultDescription,
+			"url": host,
+			"image": defaultImage,
+			"publisher": {
+				"@type": "Organization",
+				"name": siteName,
+				"url": host
+			},
+			"potentialAction": {
+				"@type": "SearchAction",
+				"target": `${host}/search?q={search_term_string}`,
+				"query-input": "required name=search_term_string"
+			}
+		})}
+	</script>
+	
+	<!-- Facebook SDK for Comments -->
+	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/id_ID/sdk.js#xfbml=1&version=v19.0&appId=1419514554927551" nonce="random"></script>
+</svelte:head>
 
 <div class="min-h-screen flex flex-col">
 	<Header />
