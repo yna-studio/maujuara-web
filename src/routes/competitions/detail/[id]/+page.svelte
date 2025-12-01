@@ -270,7 +270,7 @@
                     {#if competition.prize_estimate}
                         <p class="mb-1">Estimasi Total Hadiah Rp : {competition.prize_estimate.toLocaleString('id-ID')}</p>
                     {/if}
-                    <div class="prose prose-sm max-w-none">
+                    <div class="prose prose-sm max-w-none competition-description">
                         {@html competition.prize_desc || '<p>Tidak ada informasi hadiah</p>'}
                     </div>
                 </section>
@@ -284,15 +284,52 @@
 
             <style>
                 /* Custom styles for competition description */
+                .competition-description h2 {
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    margin: 1.5rem 0 1rem 0;
+                    color: #111827;
+                }
+
+                .competition-description h3 {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    margin: 1.25rem 0 0.75rem 0;
+                    color: #111827;
+                }
+
+                .competition-description h4 {
+                    font-size: 1.125rem;
+                    font-weight: 600;
+                    margin: 1rem 0 0.5rem 0;
+                    color: #111827;
+                }
+
+                .competition-description p {
+                    font-size: 0.875rem;
+                    line-height: 1.6;
+                    margin: 0.75rem 0;
+                    color: #374151;
+                }
+
                 .competition-description ol {
                     list-style-type: decimal;
-                    padding-left: 1.5rem;
+                    padding-left: 5px;
                     margin: 1rem 0;
                 }
 
-                .competition-description ol li {
+                .competition-description ul {
+                    list-style-type: disc;
+                    padding-left: 5px;
+                    margin: 1rem 0;
+                }
+
+                .competition-description ol li,
+                .competition-description ul li {
                     margin-bottom: 0.5rem;
-                    padding-left: 0.5rem;
+                    list-style-position: outside;
+                    padding-left: 0px;
+                    text-indent: 0;
                 }
 
                 .competition-description a {

@@ -9,7 +9,7 @@
 	import { CompetitionsAPI } from '$lib/api/competitions';
 	import { OrganizersAPI } from '$lib/api/organizers';
 	import { StatsAPI } from '$lib/api/stats';
-	import type { Organizer } from '$lib/api/organizers';
+	import type { Organizer } from '$lib/routes/api/organizers/$types';
 
 	type Stat = {
 		label: string;
@@ -25,7 +25,7 @@
 		organizer: string;
 		prize: string;
 		category: string;
-		status: 'open' | 'progress' | 'ended';
+		status: string;
 	};
 
 	let competitions: Competition[] = [];
@@ -200,7 +200,7 @@
 		{:else}
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{#each competitions as competition}
-					<CompetitionCard {competition} status={competition.status} id={competition.id} />
+					<CompetitionCard {competition} status={competition.status as 'open' | 'progress' | 'ended'} />
 				{/each}
 			</div>
 		{/if}
