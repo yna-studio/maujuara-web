@@ -1,17 +1,39 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+
     let email = '';
     let password = '';
     let loading = false;
     let error: string | null = null;
+    let success: string | null = null;
 
     async function handleSubmit(event: Event) {
         event.preventDefault();
         error = null;
+        success = null;
         loading = true;
 
         try {
-            // TODO: integrate real authentication here
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            const res = await fetch('/api/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                error = data?.error || data?.message || 'Login gagal. Silakan coba lagi.';
+                return;
+            }
+
+            success = data?.message || 'Login berhasil.';
+
+            setTimeout(() => {
+                goto('/super/dashboard');
+            }, 800);
         } catch (err) {
             error = 'Login gagal. Silakan coba lagi.';
         } finally {
@@ -28,6 +50,10 @@
         {#if error}
             <div class="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {error}
+            </div>
+        {:else if success}
+            <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                {success}
             </div>
         {/if}
 
