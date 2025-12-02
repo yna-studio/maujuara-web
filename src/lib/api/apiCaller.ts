@@ -1,10 +1,13 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
+import { PUBLIC_HOST } from '$env/static/public';
+
+const DEFAULT_BASE_URL = `${PUBLIC_HOST}/api` || '/api';
 
 class ApiCaller {
     private instance: AxiosInstance;
 
-    constructor(baseURL: string = '/api') {
+    constructor(baseURL: string = DEFAULT_BASE_URL) {
         this.instance = axios.create({
             baseURL,
             timeout: 10000,

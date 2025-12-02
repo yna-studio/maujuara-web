@@ -249,6 +249,8 @@
                                 src={competition.organizer?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&h=150&q=80'}
                                 alt={competition.organizer?.name || 'Organizer avatar'}
                                 class="w-6 h-6 rounded-full object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {competition.organizer?.name || 'Unknown'}
                         </a>
@@ -366,6 +368,12 @@
                     margin-bottom: 0.25rem;
                 }
 
+                .competition-description {
+                    word-wrap: break-word;
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                }
+
                 .competition-description a {
                     color: rgb(239 68 68) !important; /* red-600 */
                     text-decoration: underline;
@@ -375,6 +383,14 @@
                 .competition-description a:hover {
                     color: rgb(220 38 38) !important; /* red-700 */
                     text-decoration: none;
+                }
+
+                /* Contact links wrapping */
+                .contact-link {
+                    word-wrap: break-word;
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                    max-width: 100%;
                 }
             </style>
                 </section>
@@ -389,14 +405,14 @@
                                 {#if contact.type === 'email'}
                                     <a
                                         href="mailto:{contact.value}"
-                                        class="ml-1 text-red-600 hover:text-red-700"
+                                        class="ml-1 text-red-600 hover:text-red-700 contact-link"
                                     >
                                         {contact.value}
                                     </a>
                                 {:else if contact.type === 'phone' || contact.type === 'whatsapp'}
                                     <a
                                         href="https://wa.me/{contact.value.replace(/[^0-9+]/g, '')}"
-                                        class="ml-1 text-red-600 hover:text-red-700"
+                                        class="ml-1 text-red-600 hover:text-red-700 contact-link"
                                         target="_blank"
                                         rel="noreferrer"
                                     >
@@ -405,7 +421,7 @@
                                 {:else}
                                     <a
                                         href={contact.value}
-                                        class="ml-1 text-red-600 hover:text-red-700"
+                                        class="ml-1 text-red-600 hover:text-red-700 contact-link"
                                         target="_blank"
                                         rel="noreferrer"
                                     >
@@ -501,6 +517,8 @@
                     src={competition.poster}
                     alt={title || competition.title || 'Competition poster'}
                     class="max-h-[90vh] w-auto object-contain bg-black"
+                    loading="lazy"
+                    decoding="async"
                 />
             </div>
         </div>

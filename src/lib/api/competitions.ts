@@ -2,13 +2,8 @@ import { apiCaller } from './apiCaller';
 import type { Competition, CompetitionsResponse } from '../../routes/api/competitions/$types';
 
 export class CompetitionsAPI {
-    // Get all competitions with optional limit
-    static async getCompetitions(limit?: number): Promise<CompetitionsResponse> {
-        const params: Record<string, any> = {};
-        if (limit) {
-            params.limit = limit;
-        }
-        
+    // Get all competitions with flexible query params (limit, page, filters, etc.)
+    static async getCompetitions(params?: Record<string, any>): Promise<CompetitionsResponse> {
         return apiCaller.get<CompetitionsResponse>('/competitions', params);
     }
 

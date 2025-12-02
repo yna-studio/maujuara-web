@@ -1,15 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
 	import CompetitionCard from '$lib/components/CompetitionCard.svelte';
 	import Subtitle from '$lib/components/Subtitle.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import OrganizerList from '$lib/components/OrganizerList.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import { CompetitionsAPI } from '$lib/api/competitions';
-	import { OrganizersAPI } from '$lib/api/organizers';
-	import { StatsAPI } from '$lib/api/stats';
 	import type { Organizer } from '$lib/routes/api/organizers/$types';
+	import type { PageData } from './$types';
 
 	type Stat = {
 		label: string;
@@ -28,11 +24,13 @@
 		status: string;
 	};
 
-	let competitions: Competition[] = [];
-	let organizers: Organizer[] = [];
+	export let data: PageData;
+
+	let competitions: Competition[] = data.competitions ?? [];
+	let organizers: Organizer[] = data.organizers ?? [];
 	let stats: Stat[] = [];
-	let loading = true;
-	let error: string | null = null;
+	let loading = false;
+	let error: string | null = data.error;
 
 	// Format number for display
 	const formatNumber = (num: number): string => {
@@ -58,48 +56,29 @@
 		return 'Rp ' + num.toString();
 	};
 
-	// Fetch data from APIs
-	onMount(async () => {
-		if (!browser) return;
-		
-		try {
-			const [competitionsResponse, organizersResponse, statsResponse] = await Promise.all([
-				CompetitionsAPI.getCompetitions(9),
-				OrganizersAPI.getOrganizersWithLimit(10, 'updated_at'),
-				StatsAPI.getStats()
-			]);
-			
-			competitions = competitionsResponse.data;
-			organizers = organizersResponse.data;
-			
-			// Format stats from API response
-			stats = [
-				{ 
-					label: 'Kompetisi Aktif', 
-					value: formatNumber(statsResponse.data.active_competition), 
-					href: '/competitions?status=progress' 
-				},
-				{ 
-					label: 'Total Kompetisi', 
-					value: formatNumber(statsResponse.data.total_competition), 
-					href: '/competitions' 
-				},
-				{ 
-					label: 'Verified Organizers', 
-					value: formatNumber(statsResponse.data.total_organizers) 
-				},
-				{ 
-					label: 'Hadiah Tahun Ini', 
-					value: formatCurrency(statsResponse.data.prize_this_year) 
-				}
-			];
-		} catch (err) {
-			console.error('Failed to fetch data:', err);
-			error = 'Failed to load data';
-		} finally {
-			loading = false;
-		}
-	});
+	// Derive stats from server data
+	if (data.statsRaw) {
+		stats = [
+			{ 
+				label: 'Kompetisi Aktif', 
+				value: formatNumber(data.statsRaw.active_competition), 
+				href: '/competitions?status=progress' 
+			},
+			{ 
+				label: 'Total Kompetisi', 
+				value: formatNumber(data.statsRaw.total_competition), 
+				href: '/competitions' 
+			},
+			{ 
+				label: 'Verified Organizers', 
+				value: formatNumber(data.statsRaw.total_organizers) 
+			},
+			{ 
+				label: 'Hadiah Tahun Ini', 
+				value: formatCurrency(data.statsRaw.prize_this_year) 
+			}
+		];
+	}
 </script>
 
 <div class="max-w-5xl mx-auto px-4 py-16">

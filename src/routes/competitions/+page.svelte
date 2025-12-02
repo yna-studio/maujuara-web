@@ -76,12 +76,55 @@
     let totalCount = 0;
     let totalPages = 1;
 
-    // Reset to first page when URL parameters change
-    $: if ($page.url.searchParams.toString()) {
-        currentPage = 1;
-        if (browser) {
-            fetchCompetitions();
+    // Dynamic page title based on selected category
+    let pageTitle = 'Jelajah Kompetisi';
+
+    // Reset to first page and refetch whenever URL search params change
+    let lastSearchParams = '';
+
+    $: {
+        const currentSearch = $page.url.searchParams.toString();
+        if (currentSearch !== lastSearchParams) {
+            lastSearchParams = currentSearch;
+            currentPage = 1;
+            if (browser) {
+                fetchCompetitions();
+            }
         }
+    }
+
+    // Update page title when URL, categories, or status change
+    $: {
+        const categoryId = $page.url.searchParams.get('category');
+        const statusParam = $page.url.searchParams.get('status');
+
+        const category = categoryId && categories.length > 0
+            ? categories.find((c) => c.id === categoryId)
+            : null;
+
+        const statusLabel = statusParam
+            ? (statuses.find((s) => s.value === statusParam)?.text ?? statusParam)
+            : '';
+
+        if (statusLabel) {
+            // With status in query
+            if (category) {
+                pageTitle = `Jelajah Kompetisi - Kategori ${category.name} - ${statusLabel}`;
+            } else {
+                pageTitle = `Jelajah Kompetisi - ${statusLabel}`;
+            }
+        } else if (category) {
+            // Only category in query
+            pageTitle = `Jelajah Kompetisi - Kategori ${category.name}`;
+        } else {
+            // No filters affecting title
+            pageTitle = 'Jelajah Kompetisi';
+        }
+    }
+
+    // Sync browser meta title with pageTitle when running in the browser
+    $: if (browser) {
+        document.title = pageTitle;
     }
 
     // Fetch data on mount (browser only)
@@ -90,7 +133,11 @@
         
         // Initialize filter states from URL parameters
         selectedCategory = $page.url.searchParams.get('category') || '';
-        selectedOrganizer = $page.url.searchParams.get('organizer') || '';
+        // Prefer new organizer_id param, fall back to legacy organizer if present
+        selectedOrganizer =
+            $page.url.searchParams.get('organizer_id') ||
+            $page.url.searchParams.get('organizer') ||
+            '';
         selectedStatus = $page.url.searchParams.get('status') || '';
         
         await Promise.all([
@@ -132,7 +179,11 @@
             // Use URL parameters for filtering
             const urlParams = new URLSearchParams($page.url.searchParams);
             if (urlParams.get('category')) params.id_category = urlParams.get('category');
-            if (urlParams.get('organizer')) params.id_organizer = urlParams.get('organizer');
+
+            // Prefer organizer_id in query, but support legacy organizer param
+            const organizerId = urlParams.get('organizer_id') || urlParams.get('organizer');
+            if (organizerId) params.id_organizer = organizerId;
+
             if (urlParams.get('status')) params.status = urlParams.get('status');
 
             const response = await CompetitionsAPI.getCompetitions(params);
@@ -154,10 +205,12 @@
         if (selectedCategory) {
             urlParams.set('category', selectedCategory);
         }
+
+        console.log("selectedOrganizer", selectedOrganizer);
         
         if (selectedOrganizer) {
-            urlParams.set('organizer', selectedOrganizer);
-            // Add organizer name for display
+            // Use organizer_id and organizer_name in URL
+            urlParams.set('organizer_id', selectedOrganizer);
             const organizer = organizers.find(org => org.id === selectedOrganizer);
             if (organizer) {
                 urlParams.set('organizer_name', organizer.name);
@@ -207,20 +260,9 @@
 
 <main class="max-w-5xl mx-auto px-4 py-8">
     <Subtitle
-        text="Jelajah Kompetisi"
-        subtext="Ikuti beragam kompetisi disini, gunakan filter untuk menemukan kompetisi yang paling sesuai"
-    />
-
-    <!-- Mobile Filter Toggle -->
-    <div class="sm:hidden mb-4">
-        <button
-            type="button"
-            class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-            on:click={() => (showMobileFilters = !showMobileFilters)}
-        >
-            <span>{showMobileFilters ? 'Sembunyikan Filter' : 'Tampilkan Filter'}</span>
-        </button>
-    </div>
+		text={pageTitle}
+		subtext="Ikuti beragam kompetisi disini, gunakan filter untuk menemukan kompetisi yang paling sesuai"
+	/>
 
     <!-- Filters -->
     <div

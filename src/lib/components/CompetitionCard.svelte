@@ -101,6 +101,8 @@
 					src={competition.organizer.avatar} 
 					alt={competition.organizer.name}
 					class="w-6 h-6 rounded-full mr-2 object-cover"
+					loading="lazy"
+					decoding="async"
 				/>
 			{:else}
 				<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +129,7 @@
 		</div>
 
 		<!-- Prize -->
-		<div class="pt-3 border-t border-gray-200">
+		<div class="py-3 border-t border-gray-200">
 			<p class="text-sm text-gray-500 mb-1">Total Hadiah</p>
 			<p class="text-lg font-bold text-green-600">{formatPrize()}</p>
 		</div>

@@ -22,6 +22,171 @@ interface CompetitionData {
 	link_join: string;
 }
 
+interface GetCompetitionsParams {
+	search: string;
+	id_organizer: string | null;
+	id_category: string | null;
+	status: string | null;
+	limit: number;
+	page: number;
+}
+
+async function getCompetitions(params: GetCompetitionsParams) {
+	const { search, id_organizer, id_category, status, limit, page } = params;
+
+	// Get MongoDB connection
+	const uri = getMongoUri();
+
+	const client = new MongoClient(uri, {
+		serverSelectionTimeoutMS: 10000,
+		connectTimeoutMS: 10000
+	} as MongoClientOptions);
+
+	try {
+		// Connect to database
+		await client.connect();
+		const db = client.db();
+		const competitionsCollection = db.collection('competitions');
+
+		// Build query
+		const query: Record<string, any> = {};
+
+		// Add search filter (title search)
+		if (search) {
+			query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
+		}
+
+		// Add organizer filter
+		if (id_organizer) {
+			query.organizer = new ObjectId(id_organizer);
+		}
+
+		// Add category filter
+		if (id_category) {
+			query.category = new ObjectId(id_category);
+		}
+
+		// Add status filter based on dates
+		// NOTE: deadline_date and announcement_date are stored as ISO8601 *strings* in MongoDB.
+		// Use an ISO string for "now" so MongoDB does lexicographical comparison correctly.
+		const nowIso = new Date().toISOString();
+		if (status) {
+			if (status === 'open') {
+				// Competitions that are still open for submissions
+				// Rule: deadline_date > now
+				query.deadline_date = { $gt: nowIso };
+			} else if (status === 'progress') {
+				// Competitions where submission is closed but announcement not yet made
+				// Rule: deadline_date <= now && announcement_date > now
+				query.deadline_date = { $lte: nowIso };
+				query.announcement_date = { $gt: nowIso };
+			} else if (status === 'ended') {
+				// Competitions where announcement has been made
+				// Rule: announcement_date <= now
+				query.announcement_date = { $lte: nowIso };
+			}
+		}
+
+		// Calculate skip for pagination
+		const skip = (page - 1) * limit;
+
+		// Execute query with pagination and organizer lookup
+		const competitions = await competitionsCollection
+			.aggregate([
+				{ $match: query },
+				{
+					$lookup: {
+						from: 'organizers',
+						localField: 'organizer',
+						foreignField: '_id',
+						as: 'organizerInfo'
+					}
+				},
+				{ $unwind: '$organizerInfo' },
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'category',
+						foreignField: '_id',
+						as: 'categoryInfo'
+					}
+				},
+				{
+					$addFields: {
+						status: {
+							$cond: {
+								if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
+								then: 'open',
+								else: {
+									$cond: {
+										if: {
+											$and: [
+												{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
+												{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
+											]
+										},
+										then: 'progress',
+										else: 'ended'
+									}
+								}
+							}
+						},
+						category: {
+							$arrayElemAt: ['$categoryInfo', 0]
+						}
+					}
+				},
+				{
+					$project: {
+						_id: 1,
+						title: 1,
+						poster: 1,
+						deadline_date: 1,
+						announcement_date: 1,
+						created_date: 1,
+						updated_date: 1,
+						views: 1,
+						prize_desc: 1,
+						prize_estimate: 1,
+						desc: 1,
+						contacts: 1,
+						link_join: 1,
+						status: 1,
+						category: {
+							id: { $toString: '$category._id' },
+							name: '$category.name'
+						},
+						organizer: {
+							id: { $toString: '$organizerInfo._id' },
+							name: '$organizerInfo.name',
+							avatar: '$organizerInfo.avatar'
+						}
+					}
+				},
+				{ $sort: { created_date: -1 } },
+				{ $skip: skip },
+				{ $limit: limit }
+			])
+			.toArray();
+
+		// Get total count for pagination info
+		const totalCount = await competitionsCollection.countDocuments(query);
+
+		// Calculate pagination info
+		const totalPages = Math.ceil(totalCount / limit);
+
+		return {
+			competitions,
+			page,
+			limit,
+			totalPages,
+			totalCount
+		};
+	} finally {
+		await client.close();
+	}
+}
+
 export const GET: RequestHandler = async ({ url }) => {
 	try {
 		// Parse query parameters
@@ -75,140 +240,17 @@ export const GET: RequestHandler = async ({ url }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const competitionsCollection = db.collection('competitions');
-		
-		// Build query
-		const query: Record<string, any> = {};
-		
-		// Add search filter (title search)
-		if (search) {
-			query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
-		}
-		
-		// Add organizer filter
-		if (id_organizer) {
-			query.organizer = new ObjectId(id_organizer);
-		}
-		
-		// Add category filter
-		if (id_category) {
-			query.category = new ObjectId(id_category);
-		}
-		
-		// Add status filter based on dates
-		const now = new Date();
-		if (status) {
-			if (status === 'open') {
-				query.deadline_date = { $gt: now };
-			} else if (status === 'progress') {
-				query.deadline_date = { $lte: now };
-				query.announcement_date = { $gte: now };
-			} else if (status === 'ended') {
-				query.announcement_date = { $lte: now };
-			}
-		}
-		
-		// Calculate skip for pagination
-		const skip = (page - 1) * limit;
-		
-		// Execute query with pagination and organizer lookup
-		const competitions = await competitionsCollection
-			.aggregate([
-				{ $match: query },
-				{
-					$lookup: {
-						from: 'organizers',
-						localField: 'organizer',
-						foreignField: '_id',
-						as: 'organizerInfo'
-					}
-				},
-				{ $unwind: '$organizerInfo' },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'category',
-						foreignField: '_id',
-						as: 'categoryInfo'
-					}
-				},
-				{
-					$addFields: {
-						status: {
-							$cond: {
-								if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
-								then: 'open',
-								else: {
-									$cond: {
-										if: { $and: [
-											{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
-											{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
-										]},
-										then: 'progress',
-										else: 'ended'
-									}
-								}
-							}
-						},
-						category: {
-							$arrayElemAt: ['$categoryInfo', 0]
-						}
-					}
-				},
-				{
-					$project: {
-						_id: 1,
-						title: 1,
-						poster: 1,
-						deadline_date: 1,
-						announcement_date: 1,
-						created_date: 1,
-						updated_date: 1,
-						views: 1,
-						prize_desc: 1,
-						prize_estimate: 1,
-						desc: 1,
-						contacts: 1,
-						link_join: 1,
-						status: 1,
-						category: {
-							id: { $toString: '$category._id' },
-							name: '$category.name'
-						},
-						organizer: {
-							id: { $toString: '$organizerInfo._id' },
-							name: '$organizerInfo.name',
-							avatar: '$organizerInfo.avatar'
-						}
-					}
-				},
-				{ $sort: { created_date: -1 } },
-				{ $skip: skip },
-				{ $limit: limit }
-			])
-			.toArray();
-		
-		// Get total count for pagination info
-		const totalCount = await competitionsCollection.countDocuments(query);
-		
-		// Close connection
-		await client.close();
-		
-		// Calculate pagination info
-		const totalPages = Math.ceil(totalCount / limit);
-		
+
+		const { competitions, page: currentPage, limit: currentLimit, totalPages, totalCount } =
+			await getCompetitions({
+				search,
+				id_organizer: id_organizer || null,
+				id_category: id_category || null,
+				status: status || null,
+				limit,
+				page
+			});
+
 		return json({
 			data: competitions.map(comp => ({
 				...comp,
@@ -216,12 +258,12 @@ export const GET: RequestHandler = async ({ url }) => {
 			})),
 			status: 200,
 			meta: {
-				currentPage: page,
+				currentPage,
 				totalPages,
 				totalCount,
-				limit,
-				hasNextPage: page < totalPages,
-				hasPrevPage: page > 1,
+				limit: currentLimit,
+				hasNextPage: currentPage < totalPages,
+				hasPrevPage: currentPage > 1,
 				filters: {
 					search: search || null,
 					id_organizer: id_organizer || null,
@@ -229,7 +271,6 @@ export const GET: RequestHandler = async ({ url }) => {
 				}
 			}
 		});
-		
 	} catch (error) {
 		console.error('Failed to fetch competitions:', error);
 		
