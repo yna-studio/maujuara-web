@@ -286,7 +286,7 @@
             </div>
 
             <!-- Organizer Filter -->
-            <div>
+            <!-- <div>
                 <label for="organizer" class="block text-sm font-medium text-gray-700 mb-2">Penyelenggara</label>
                 <SearchableSelect
                     id="organizer"
@@ -294,7 +294,7 @@
                     options={organizers}
                     placeholder="Cari penyelenggara..."
                 />
-            </div>
+            </div> -->
 
             <!-- Status Filter -->
             <div>
@@ -322,9 +322,15 @@
 
     <!-- Competitions Grid -->
     {#if loading && competitions.length === 0}
-        <div class="flex justify-center py-8">
-            <Spinner size="large" color="primary" />
-        </div>
+	    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+	        {#each Array(9) as _}
+	            <div class="bg-gray-100 rounded-xl p-6 animate-pulse">
+	                <div class="h-8 bg-gray-200 rounded mb-4"></div>
+	                <div class="h-4 bg-gray-200 rounded mb-2"></div>
+	                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+	            </div>
+	        {/each}
+	    </div>
     {:else if error}
         <div class="py-8">
             <FullWidthMessage
