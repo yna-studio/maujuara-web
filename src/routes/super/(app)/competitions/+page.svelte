@@ -33,7 +33,16 @@
 	}
 </script>
 
-<section class="space-y-4" on:click={closeDropdown}>
+<section class="space-y-4">
+	<!-- Click overlay to close dropdowns -->
+	{#if openDropdownId}
+		<div 
+			class="fixed inset-0 z-0" 
+			on:click={closeDropdown}
+			on:keydown={(e) => { if (e.key === 'Escape') closeDropdown(); }}
+			aria-hidden="true"
+		></div>
+	{/if}
 	<div class="flex items-center justify-between">
 		<h2 class="text-2xl font-bold text-gray-900">All Competitions</h2>
 		<a
@@ -45,81 +54,96 @@
 	</div>
 
 	{#if data.competitions && data.competitions.length > 0}
-		<div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-			<table class="min-w-full divide-y divide-gray-200">
-				<thead class="bg-gray-50">
-					<tr>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Title
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Category
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Created
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Updated
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Deadline
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Announcement
-						</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Organizers
-						</th>
-						<th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody class="bg-white divide-y divide-gray-200">
-					{#each data.competitions as comp}
+		<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-gray-200">
+					<thead class="bg-gray-50">
 						<tr>
-							<td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-								{comp.title || comp.name || '-'}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-								{comp.category?.name || comp.category || '-'}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-								{formatDate(comp.created_date)}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-								{formatDate(comp.updated_date)}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-								{formatDate(comp.deadline_date)}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-								{formatDate(comp.announcement_date)}
-							</td>
-							<td class="px-4 py-4 text-sm text-gray-500">
-								{comp.organizer?.name || comp.organizer || '-'}
-							</td>
-							<td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-								<div class="relative inline-block text-left">
-									<button
-										type="button"
-										class="inline-flex justify-center items-center w-full rounded-md border border-gray-300 shadow-sm p-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-										on:click|stopPropagation={() => toggleDropdown(comp._id)}
-									>
-										<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-											<path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-										</svg>
-									</button>
-
-									{#if openDropdownId === comp._id}
-										<div
-											class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-											role="menu"
-											aria-orientation="vertical"
-											aria-labelledby="menu-button-{comp._id}"
-											tabindex="-1"
-											on:click|stopPropagation
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Title
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								ID
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Views
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Category
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Created
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Updated
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Deadline
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Announcement
+							</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								Organizers
+							</th>
+							<th class="sticky right-0 bg-gray-50 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">
+								
+							</th>
+						</tr>
+					</thead>
+					<tbody class="bg-white divide-y divide-gray-200">
+						{#each data.competitions as comp}
+							<tr>
+								<td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+									{comp.title || comp.name || '-'}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+									{comp._id || comp.id || '-'}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{comp.views || comp.view_count || 0}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{comp.category?.name || comp.category || '-'}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{formatDate(comp.created_date)}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{formatDate(comp.updated_date)}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{formatDate(comp.deadline_date)}
+								</td>
+								<td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+									{formatDate(comp.announcement_date)}
+								</td>
+								<td class="px-4 py-4 text-sm text-gray-500">
+									{comp.organizer?.name || comp.organizer || '-'}
+								</td>
+								<td class="sticky right-0 bg-white px-4 py-4 whitespace-nowrap text-right text-sm font-medium border-l border-gray-200">
+									<div class="relative inline-block text-left">
+										<button
+											type="button"
+											class="inline-flex justify-center items-center w-full rounded-md border border-gray-300 shadow-sm p-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+											aria-label="Actions for {comp.title || comp.name}"
+											on:click|stopPropagation={() => toggleDropdown(comp._id)}
 										>
+											<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+												<path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+											</svg>
+										</button>
+
+										{#if openDropdownId === comp._id}
+											<div
+												class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+												role="menu"
+												aria-orientation="vertical"
+												aria-labelledby="menu-button-{comp._id}"
+												tabindex="-1"
+												on:click|stopPropagation
+												on:keydown={(e) => { if (e.key === 'Escape') closeDropdown(); }}
+											>
 											<div class="py-1" role="none">
 												<button
 													class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
@@ -147,6 +171,7 @@
 				</tbody>
 			</table>
 		</div>
+	</div>
 	{:else}
 		<div class="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
 			No competitions found.

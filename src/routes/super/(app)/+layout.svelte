@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	export let data;
 	let sidebarOpen = false;
 </script>
@@ -29,7 +30,7 @@
 			<nav class="flex-1 px-4 py-4 space-y-1 text-sm">
 				<a
 					href="/super/dashboard"
-					class="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+					class="block rounded-lg px-3 py-2 {$page.url.pathname === '/super/dashboard' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 				>
 					Dashboard
 				</a>
@@ -40,15 +41,33 @@
 					</p>
 					<a
 						href="/super/competitions/create"
-						class="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname === '/super/competitions/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 					>
 						Create
 					</a>
 					<a
 						href="/super/competitions"
-						class="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname.startsWith('/super/competitions') && $page.url.pathname !== '/super/competitions/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 					>
 						All competitions
+					</a>
+				</div>
+
+				<div class="mt-4">
+					<p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+						Organizers
+					</p>
+					<a
+						href="/super/organizers/create"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname === '/super/organizers/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+					>
+						Create
+					</a>
+					<a
+						href="/super/organizers"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname.startsWith('/super/organizers') && $page.url.pathname !== '/super/organizers/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+					>
+						All Organizers
 					</a>
 				</div>
 			</nav>

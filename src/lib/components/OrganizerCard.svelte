@@ -17,7 +17,7 @@
 
 <a
     style="margin-bottom:40px"
-    href={`/competitions?organizer=${organizer._id}`}
+    href={`/competitions?organizer=${organizer._id}&organizer_name=${encodeURIComponent(organizer.name)}`}
     class="flex flex-col items-center snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
 >
     <div

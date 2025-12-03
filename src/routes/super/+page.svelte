@@ -1,5 +1,8 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import type { PageData } from './$types';
+
+    export let data: PageData;
 
     let email = '';
     let password = '';
@@ -26,6 +29,7 @@
 
             if (!res.ok) {
                 error = data?.error || data?.message || 'Login gagal. Silakan coba lagi.';
+                loading = false;
                 return;
             }
 
@@ -36,7 +40,6 @@
             }, 800);
         } catch (err) {
             error = 'Login gagal. Silakan coba lagi.';
-        } finally {
             loading = false;
         }
     }

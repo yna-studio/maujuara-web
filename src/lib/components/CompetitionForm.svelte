@@ -163,6 +163,7 @@
 				} else {
 					console.error('Failed to update competition:', result);
 					alert(`Error: ${result.error || 'Failed to update competition'}`);
+					loading = false;
 				}
 			} else {
 				// Create new competition
@@ -182,12 +183,12 @@
 				} else {
 					console.error('Failed to create competition:', result);
 					alert(`Error: ${result.error || 'Failed to create competition'}`);
+					loading = false;
 				}
 			}
 		} catch (error) {
 			console.error('Error saving competition:', error);
 			alert('Error saving competition. Please try again.');
-		} finally {
 			loading = false;
 		}
 	}

@@ -97,6 +97,8 @@
     $: {
         const categoryId = $page.url.searchParams.get('category');
         const statusParam = $page.url.searchParams.get('status');
+        const organizerId = $page.url.searchParams.get('organizer_id') || $page.url.searchParams.get('organizer');
+        const organizerName = $page.url.searchParams.get('organizer_name');
 
         const category = categoryId && categories.length > 0
             ? categories.find((c) => c.id === categoryId)
@@ -106,19 +108,27 @@
             ? (statuses.find((s) => s.value === statusParam)?.text ?? statusParam)
             : '';
 
+        // Build base title
+        let baseTitle = 'Jelajah Kompetisi';
+        
         if (statusLabel) {
             // With status in query
             if (category) {
-                pageTitle = `Jelajah Kompetisi - Kategori ${category.name} - ${statusLabel}`;
+                baseTitle = `Jelajah Kompetisi - Kategori ${category.name} - ${statusLabel}`;
             } else {
-                pageTitle = `Jelajah Kompetisi - ${statusLabel}`;
+                baseTitle = `Jelajah Kompetisi - ${statusLabel}`;
             }
         } else if (category) {
             // Only category in query
-            pageTitle = `Jelajah Kompetisi - Kategori ${category.name}`;
+            baseTitle = `Jelajah Kompetisi - Kategori ${category.name}`;
+        }
+
+        // Add organizer name suffix if available
+        if (organizerName && organizerId) {
+            pageTitle = `${baseTitle} oleh ${organizerName}`;
         } else {
-            // No filters affecting title
-            pageTitle = 'Jelajah Kompetisi';
+            // No organizer in query
+            pageTitle = baseTitle;
         }
     }
 

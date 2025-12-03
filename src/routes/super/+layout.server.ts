@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 
 	// No token: allow access to /super (login page)
 	if (!token) {
-		return {};
+		return { loading: false, user: null };
 	}
 
 	// Validate token against database before deciding to redirect
@@ -28,11 +28,26 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 		if (!user) {
 			// Invalid or stale token: clear cookie and stay on /super without redirect
 			cookies.delete('session_token', { path: '/' });
-			return {};
+			return { loading: false, user: null };
 		}
 
-		// Valid session: redirect logged-in user away from login page
-		// throw redirect(302, '/super/dashboard');
+		// Valid session: return user data as plain object
+		return { 
+			loading: false, 
+			user: {
+				_id: user._id.toString(),
+				name: user.name,
+				email: user.email,
+				token: user.token,
+				is_active: user.is_active,
+				level: user.level,
+				created_date: user.created_date,
+				updated_date: user.updated_date
+			}
+		};
+	} catch (error) {
+		// Handle redirect or other errors
+		throw error;
 	} finally {
 		await client.close();
 	}

@@ -23,7 +23,7 @@
 	<div class="flex items-start gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
 		{#each organizers as organizer}
 			<a
-				href={`/competitions?organizer=${organizer._id}`}
+				href={`/competitions?organizer=${organizer._id}&organizer_name=${encodeURIComponent(organizer.name)}`}
 				class="flex flex-col items-center min-w-[110px] snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
 			>
 				<div

@@ -28,7 +28,7 @@
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
 
-    $: organizerDetailPath = competition ? `/organizers/detail/${slugify(competition.organizer.name)}-${competition.organizer.id}` : '';
+    $: organizerDetailPath = competition ? `/competitions?organizer=${competition.organizer.id}&organizer_name=${encodeURIComponent(competition.organizer.name)}` : '';
 
     $: statusLabel = competition 
         ? competition.status === 'open'
