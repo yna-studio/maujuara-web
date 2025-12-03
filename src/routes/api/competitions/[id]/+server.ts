@@ -149,3 +149,102 @@ export const GET: RequestHandler = async ({ params }) => {
 		}, { status: 500 });
 	}
 };
+
+export const PUT: RequestHandler = async ({ params, request }) => {
+	try {
+		const { id } = params;
+		const body = await request.json();
+
+		// Validate ID exists
+		if (!id) {
+			return json({
+				error: 'Competition ID is required',
+				status: 400
+			}, { status: 400 });
+		}
+
+		// Validate ObjectId format
+		if (!ObjectId.isValid(id)) {
+			return json({
+				error: 'Invalid competition ID format',
+				status: 400
+			}, { status: 400 });
+		}
+
+		// Get MongoDB connection
+		const uri = getMongoUri();
+		
+		const client = new MongoClient(uri, {
+			serverSelectionTimeoutMS: 10000,
+			connectTimeoutMS: 10000
+		} as MongoClientOptions);
+		
+		// Connect to database
+		await client.connect();
+		const db = client.db();
+		const competitionsCollection = db.collection('competitions');
+		const organizersCollection = db.collection('organizers');
+		
+		// Check if competition exists
+		const existingCompetition = await competitionsCollection.findOne({ _id: new ObjectId(id) });
+		if (!existingCompetition) {
+			await client.close();
+			return json({
+				error: 'Competition not found',
+				status: 404
+			}, { status: 404 });
+		}
+
+		// Prepare update data
+		const now = new Date();
+		const updateData = {
+			...body,
+			updated_date: now.toISOString(),
+			// Convert string IDs to ObjectId if needed
+			category: body.category ? new ObjectId(body.category) : existingCompetition.category,
+			organizer: body.organizer ? new ObjectId(body.organizer) : existingCompetition.organizer
+		};
+
+		// Update competition
+		const result = await competitionsCollection.updateOne(
+			{ _id: new ObjectId(id) },
+			{ $set: updateData }
+		);
+
+		// Update organizer's updated_at if organizer changed
+		if (body.organizer && body.organizer !== existingCompetition.organizer?.toString()) {
+			await organizersCollection.updateOne(
+				{ _id: new ObjectId(body.organizer) },
+				{ $set: { updated_at: now.toISOString() } }
+			);
+		}
+
+		// Close connection
+		await client.close();
+
+		if (result.matchedCount === 0) {
+			return json({
+				error: 'Failed to update competition',
+				status: 500
+			}, { status: 500 });
+		}
+
+		return json({
+			message: 'Competition updated successfully',
+			status: 200,
+			data: {
+				...updateData,
+				_id: id
+			}
+		});
+
+	} catch (error) {
+		console.error('Failed to update competition:', error);
+		
+		return json({
+			error: 'Failed to update competition',
+			message: error instanceof Error ? error.message : 'Unknown error',
+			status: 500
+		}, { status: 500 });
+	}
+};

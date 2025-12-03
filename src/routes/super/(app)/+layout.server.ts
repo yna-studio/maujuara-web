@@ -25,6 +25,9 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 		const user = await usersCollection.findOne({ token });
 
 		if (!user) {
+			// Token exists but does not correspond to a user anymore.
+			// Clear the cookie to avoid redirect loops between /super and /super/dashboard.
+			cookies.delete('session_token', { path: '/' });
 			throw redirect(302, '/super');
 		}
 

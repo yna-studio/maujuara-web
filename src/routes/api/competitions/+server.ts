@@ -163,7 +163,7 @@ async function getCompetitions(params: GetCompetitionsParams) {
 						}
 					}
 				},
-				{ $sort: { created_date: -1 } },
+				{ $sort: { updated_date: -1 } },
 				{ $skip: skip },
 				{ $limit: limit }
 			])

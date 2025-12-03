@@ -8,6 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		// Parse query parameters
 		const limitParam = url.searchParams.get('limit');
 		const orderBy = url.searchParams.get('orderBy');
+		const search = url.searchParams.get('search');
 		
 		// Set defaults and validate
 		const limit = limitParam ? parseInt(limitParam, 10) : 10;
@@ -36,8 +37,15 @@ export const GET: RequestHandler = async ({ url }) => {
 		const organizersCollection = db.collection('organizers');
 		
 		// Build query
-		const query = {};
-		const sort: Record<string, 1 | -1> = { [orderByField]: -1 }; // Sort by specified field in descending order
+		const query: Record<string, any> = {};
+		
+		// Add search filter for organizer name
+		if (search && search.trim() !== '') {
+			query.name = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
+		}
+		
+		const sort: Record<string, 1 | -1> = {};
+sort[orderByField!] = -1; // Sort by specified field in descending order
 		
 		// Execute query
 		const organizers = await organizersCollection
@@ -63,6 +71,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			meta: {
 				limit,
 				orderBy: orderByField,
+				search: search || null,
 				count: organizers.length
 			}
 		});

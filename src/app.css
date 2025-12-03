@@ -1,11 +1,83 @@
 @import "tailwindcss";
 
+/* @theme is a Tailwind CSS v4 alpha feature */
 @theme {
 	--font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
 	font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Global form field padding */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+textarea,
+select {
+	padding-top: 0.75rem;
+	padding-bottom: 0.75rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+}
+
+/* HTML Editor Styles */
+[contenteditable] h1,
+[contenteditable] h2,
+[contenteditable] h3,
+[contenteditable] h4,
+[contenteditable] h5,
+[contenteditable] h6 {
+	font-weight: bold;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+[contenteditable] h1 { font-size: 2em; }
+[contenteditable] h2 { font-size: 1.5em; }
+[contenteditable] h3 { font-size: 1.17em; }
+[contenteditable] h4 { font-size: 1em; }
+[contenteditable] h5 { font-size: 0.83em; }
+[contenteditable] h6 { font-size: 0.67em; }
+
+[contenteditable] strong,
+[contenteditable] b {
+	font-weight: bold;
+}
+
+[contenteditable] em,
+[contenteditable] i {
+	font-style: italic;
+}
+
+[contenteditable] u {
+	text-decoration: underline;
+}
+
+[contenteditable] ul,
+[contenteditable] ol {
+	margin-left: 2em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+[contenteditable] li {
+	margin: 0.25em 0;
+}
+
+[contenteditable] a {
+	color: #3b82f6;
+	text-decoration: underline;
+}
+
+[contenteditable] a:hover {
+	color: #2563eb;
 }
 
 
