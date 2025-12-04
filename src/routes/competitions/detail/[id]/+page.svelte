@@ -75,7 +75,7 @@
     async function copyInstagramCaption() {
         try {
             const captionTitle = competition?.title || 'Competition Detail';
-            const captionDesc = competition?.desc ? getFirstParagraph(competition.desc) + '...' : '';
+            const captionDesc = competition?.desc ? getFirstThreeParagraphs(competition.desc) : '';
             const captionLink = $page.url.href;
             const caption = `${captionTitle}\n\n${captionDesc}\n\n${captionLink}`;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -93,30 +93,30 @@
         }
     }
 
-    // Function to get first text content from HTML
-    function getFirstParagraph(html: string): string {
+    // Function to get first three paragraphs from HTML
+    function getFirstThreeParagraphs(html: string): string {
         // Create a temporary div element to parse HTML
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
         
-        // Get all text content from the entire HTML
-        const allText = tempDiv.textContent || tempDiv.innerText || '';
+        // Get all paragraph elements
+        const paragraphs = tempDiv.querySelectorAll('p');
         
-        // Get the first meaningful text (up to first sentence or 150 characters)
-        const trimmedText = allText.trim();
+        if (paragraphs.length === 0) {
+            // If no p tags found, get all text content and split by double newlines
+            const allText = tempDiv.textContent || tempDiv.innerText || '';
+            const textParagraphs = allText.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+            return textParagraphs.slice(0, 3).join('\n\n').trim();
+        }
         
-        if (trimmedText.length === 0) {
+        // Get text from first 3 paragraph elements
+        const firstThreeTexts = Array.from(paragraphs).slice(0, 3).map(p => p.textContent?.trim() || '').filter(text => text.length > 0);
+        
+        if (firstThreeTexts.length === 0) {
             return '';
         }
         
-        // Try to find first sentence (ending with . ! ?)
-        const firstSentenceMatch = trimmedText.match(/^[^.!?]*[.!?]/);
-        if (firstSentenceMatch && firstSentenceMatch[0].length <= 300) {
-            return firstSentenceMatch[0].trim();
-        }
-        
-        // If no sentence found or too long, get first 300 characters
-        return trimmedText.substring(0, 300).trim();
+        return firstThreeTexts.join('\n\n');
     }
 
     // Function to strip HTML tags from string
