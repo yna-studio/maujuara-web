@@ -274,6 +274,17 @@
 		subtext="Ikuti beragam kompetisi disini, gunakan filter untuk menemukan kompetisi yang paling sesuai"
 	/>
 
+    <!-- Mobile Filter Toggle -->
+    <div class="sm:hidden mb-4">
+        <Button
+            text="Filter Kompetisi"
+            variant="small"
+            color="white"
+            size="full"
+            on:click={() => showMobileFilters = !showMobileFilters}
+        />
+    </div>
+
     <!-- Filters -->
     <div
         class={`mb-8 pb-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${showMobileFilters ? '' : 'hidden sm:flex'}`}

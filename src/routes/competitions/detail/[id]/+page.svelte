@@ -76,8 +76,35 @@
         try {
             const captionTitle = competition?.title || 'Competition Detail';
             const captionDesc = competition?.desc ? getFirstThreeParagraphs(competition.desc) : '';
+            
+            // Find Instagram contact if available
+            const instagramContact = competition?.contacts?.find(contact => 
+                contact.type === 'instagram' || 
+                (contact.type === 'link' && contact.value.includes('instagram.com'))
+            );
+            
+            // Extract Instagram username (remove @ if present, or extract from URL)
+            let instagramUsername = '';
+            if (instagramContact) {
+                const value = instagramContact.value;
+                if (value.includes('@')) {
+                    instagramUsername = value.split('@').pop().trim();
+                } else if (value.includes('instagram.com/')) {
+                    instagramUsername = value.split('instagram.com/').pop().split('/')[0].trim();
+                } else {
+                    instagramUsername = value.replace('@', '').trim();
+                }
+            }
+            
             const captionLink = $page.url.href;
-            const caption = `${captionTitle}\n\n${captionDesc}\n\n${captionLink}`;
+            
+            // Build caption with Instagram username if available
+            let caption = `${captionTitle}\n\n${captionDesc}`;
+            if (instagramUsername) {
+                caption += `\n\n@${instagramUsername}`;
+            }
+            caption += `\n\n${captionLink}`;
+            
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(caption.trim());
             } else {
