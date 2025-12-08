@@ -55,6 +55,24 @@
 
 				<div class="mt-4">
 					<p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+						Categories
+					</p>
+					<a
+						href="/super/categories/create"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname === '/super/categories/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+					>
+						Create
+					</a>
+					<a
+						href="/super/categories"
+						class="block rounded-lg px-3 py-2 {$page.url.pathname.startsWith('/super/categories') && $page.url.pathname !== '/super/categories/create' ? 'bg-red-50 text-red-700 font-medium' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+					>
+						All Categories
+					</a>
+				</div>
+
+				<div class="mt-4">
+					<p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
 						Organizers
 					</p>
 					<a
