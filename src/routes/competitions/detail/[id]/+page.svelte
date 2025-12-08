@@ -445,6 +445,15 @@
                                     >
                                         {contact.value}
                                     </a>
+                                {:else if contact.type === 'instagram'}
+                                    <a
+                                        href="https://instagram.com/{contact.value.replace('@', '')}"
+                                        class="ml-1 text-red-600 hover:text-red-700 contact-link"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {contact.value}
+                                    </a>
                                 {:else}
                                     <a
                                         href={contact.value}
