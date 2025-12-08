@@ -75,7 +75,23 @@
     async function copyInstagramCaption() {
         try {
             const captionTitle = competition?.title || 'Competition Detail';
-            const captionDesc = competition?.desc ? getFirstThreeParagraphs(competition.desc) : '';
+            
+            // Clear all HTML and get first 50 words with ... suffix
+            let captionDesc = '';
+            if (competition?.desc) {
+                // Strip all HTML tags
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = competition.desc;
+                const plainText = tempDiv.textContent || tempDiv.innerText || '';
+                
+                // Split into words and get first 50
+                const words = plainText.trim().split(/\s+/);
+                if (words.length > 50) {
+                    captionDesc = words.slice(0, 50).join(' ') + '...';
+                } else {
+                    captionDesc = plainText.trim();
+                }
+            }
             
             // Find Instagram contact if available
             const instagramContact = competition?.contacts?.find(contact => 
