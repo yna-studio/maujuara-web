@@ -9,8 +9,9 @@
 	</h2>
 	{#if subtext}
 		<p class="text-sm text-gray-600">
-			{subtext}
+			{@html subtext}
 		</p>
 	{/if}
+	<slot />
 </div>
 

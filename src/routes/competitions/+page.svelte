@@ -22,7 +22,7 @@
         poster: string;
         deadline_date: string;
         announcement_date: string;
-        status: 'open' | 'progress' | 'ended';
+        status: "open" | "progress" | "ended";
         category: {
             id: string;
             name: string;
@@ -58,16 +58,16 @@
     let error: string | null = null;
 
     // Filter states - initialize from URL parameters
-    let selectedCategory = '';
-    let selectedOrganizer = '';
-    let selectedStatus = '';
+    let selectedCategory = "";
+    let selectedOrganizer = "";
+    let selectedStatus = "";
     let showMobileFilters = false;
 
     // Filter options
     const statuses = [
         { value: "open", text: "Open" },
         { value: "progress", text: "Berlangsung" },
-        { value: "ended", text: "Berakhir" }
+        { value: "ended", text: "Berakhir" },
     ];
 
     // Pagination
@@ -77,10 +77,10 @@
     let totalPages = 1;
 
     // Dynamic page title based on selected category
-    let pageTitle = 'Jelajah Kompetisi';
+    let pageTitle = "Jelajah Kompetisi";
 
     // Reset to first page and refetch whenever URL search params change
-    let lastSearchParams = '';
+    let lastSearchParams = "";
 
     $: {
         const currentSearch = $page.url.searchParams.toString();
@@ -95,22 +95,26 @@
 
     // Update page title when URL, categories, or status change
     $: {
-        const categoryId = $page.url.searchParams.get('category');
-        const statusParam = $page.url.searchParams.get('status');
-        const organizerId = $page.url.searchParams.get('organizer_id') || $page.url.searchParams.get('organizer');
-        const organizerName = $page.url.searchParams.get('organizer_name');
+        const categoryId = $page.url.searchParams.get("category");
+        const statusParam = $page.url.searchParams.get("status");
+        const organizerId =
+            $page.url.searchParams.get("organizer_id") ||
+            $page.url.searchParams.get("organizer");
+        const organizerName = $page.url.searchParams.get("organizer_name");
 
-        const category = categoryId && categories.length > 0
-            ? categories.find((c) => c.id === categoryId)
-            : null;
+        const category =
+            categoryId && categories.length > 0
+                ? categories.find((c) => c.id === categoryId)
+                : null;
 
         const statusLabel = statusParam
-            ? (statuses.find((s) => s.value === statusParam)?.text ?? statusParam)
-            : '';
+            ? (statuses.find((s) => s.value === statusParam)?.text ??
+              statusParam)
+            : "";
 
         // Build base title
-        let baseTitle = 'Jelajah Kompetisi';
-        
+        let baseTitle = "Jelajah Kompetisi";
+
         if (statusLabel) {
             // With status in query
             if (category) {
@@ -140,20 +144,20 @@
     // Fetch data on mount (browser only)
     onMount(async () => {
         if (!browser) return;
-        
+
         // Initialize filter states from URL parameters
-        selectedCategory = $page.url.searchParams.get('category') || '';
+        selectedCategory = $page.url.searchParams.get("category") || "";
         // Prefer new organizer_id param, fall back to legacy organizer if present
         selectedOrganizer =
-            $page.url.searchParams.get('organizer_id') ||
-            $page.url.searchParams.get('organizer') ||
-            '';
-        selectedStatus = $page.url.searchParams.get('status') || '';
-        
+            $page.url.searchParams.get("organizer_id") ||
+            $page.url.searchParams.get("organizer") ||
+            "";
+        selectedStatus = $page.url.searchParams.get("status") || "";
+
         await Promise.all([
             fetchCategories(),
             fetchOrganizers(),
-            fetchCompetitions()
+            fetchCompetitions(),
         ]);
     });
 
@@ -162,19 +166,19 @@
             const response = await CategoriesAPI.getCategories();
             categories = response.data;
         } catch (err) {
-            console.error('Failed to fetch categories:', err);
+            console.error("Failed to fetch categories:", err);
         }
     }
 
     async function fetchOrganizers() {
         try {
             const response = await OrganizersListAPI.getAllOrganizers();
-            organizers = response.data.map(org => ({
+            organizers = response.data.map((org) => ({
                 id: org.id,
-                name: org.name
+                name: org.name,
             }));
         } catch (err) {
-            console.error('Failed to fetch organizers:', err);
+            console.error("Failed to fetch organizers:", err);
         }
     }
 
@@ -183,26 +187,33 @@
             loading = true;
             const params: Record<string, any> = {
                 limit: itemsPerPage,
-                page: currentPage
+                page: currentPage,
             };
 
             // Use URL parameters for filtering
             const urlParams = new URLSearchParams($page.url.searchParams);
-            if (urlParams.get('category')) params.id_category = urlParams.get('category');
+            if (urlParams.get("category"))
+                params.id_category = urlParams.get("category");
 
             // Prefer organizer_id in query, but support legacy organizer param
-            const organizerId = urlParams.get('organizer_id') || urlParams.get('organizer');
+            const organizerId =
+                urlParams.get("organizer_id") || urlParams.get("organizer");
             if (organizerId) params.id_organizer = organizerId;
 
-            if (urlParams.get('status')) params.status = urlParams.get('status');
+            if (urlParams.get("status"))
+                params.status = urlParams.get("status");
 
             const response = await CompetitionsAPI.getCompetitions(params);
-            competitions = response.data;
+            if (currentPage === 1) {
+                competitions = response.data;
+            } else {
+                competitions = [...competitions, ...response.data];
+            }
             totalCount = response.meta?.totalCount || 0;
             totalPages = response.meta?.totalPages || 1;
         } catch (err) {
-            console.error('Failed to fetch competitions:', err);
-            error = 'Gagal memuat kompetisi';
+            console.error("Failed to fetch competitions:", err);
+            error = "Gagal memuat kompetisi";
         } finally {
             loading = false;
         }
@@ -211,29 +222,33 @@
     // Filter redirect function
     function applyFilters() {
         const urlParams = new URLSearchParams();
-        
+
         if (selectedCategory) {
-            urlParams.set('category', selectedCategory);
+            urlParams.set("category", selectedCategory);
         }
 
         console.log("selectedOrganizer", selectedOrganizer);
-        
+
         if (selectedOrganizer) {
             // Use organizer_id and organizer_name in URL
-            urlParams.set('organizer_id', selectedOrganizer);
-            const organizer = organizers.find(org => org.id === selectedOrganizer);
+            urlParams.set("organizer_id", selectedOrganizer);
+            const organizer = organizers.find(
+                (org) => org.id === selectedOrganizer,
+            );
             if (organizer) {
-                urlParams.set('organizer_name', organizer.name);
+                urlParams.set("organizer_name", organizer.name);
             }
         }
-        
+
         if (selectedStatus) {
-            urlParams.set('status', selectedStatus);
+            urlParams.set("status", selectedStatus);
         }
-        
+
         // Build new URL
-        const newUrl = urlParams.toString() ? `/competitions?${urlParams.toString()}` : '/competitions';
-        
+        const newUrl = urlParams.toString()
+            ? `/competitions?${urlParams.toString()}`
+            : "/competitions";
+
         // Redirect
         goto(newUrl);
     }
@@ -244,7 +259,7 @@
     // Load more function for pagination
     async function loadMore() {
         if (loading || currentPage >= totalPages) return;
-        
+
         currentPage++;
         await fetchCompetitions();
     }
@@ -253,7 +268,8 @@
     function handleScroll() {
         if (!browser || loading || currentPage >= totalPages) return;
 
-        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        const { scrollTop, scrollHeight, clientHeight } =
+            document.documentElement;
         if (scrollTop + clientHeight >= scrollHeight - 100) {
             loadMore();
         }
@@ -262,17 +278,29 @@
     // Add scroll listener (browser only)
     onMount(() => {
         if (!browser) return;
-        
+
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     });
 </script>
 
 <main class="max-w-5xl mx-auto px-4 py-8">
-    <Subtitle
-		text={pageTitle}
-		subtext="Ikuti beragam kompetisi disini, gunakan filter untuk menemukan kompetisi yang paling sesuai"
-	/>
+    <Subtitle text={pageTitle}>
+        <p class="text-sm text-gray-600">
+            Ikuti beragam kompetisi disini, gunakan filter untuk menemukan
+            kompetisi yang paling sesuai
+            <br />
+            <!-- Competition Count Info -->
+            {#if !loading && totalCount > 0}
+                Menampilkan <span class="font-semibold text-gray-900"
+                    >{competitions.length}</span
+                >
+                kompetisi dari total
+                <span class="font-semibold text-gray-900">{totalCount}</span> kompetisi
+                tersedia
+            {/if}
+        </p>
+    </Subtitle>
 
     <!-- Mobile Filter Toggle -->
     <div class="sm:hidden mb-4">
@@ -281,20 +309,24 @@
             variant="small"
             color="white"
             size="full"
-            on:click={() => showMobileFilters = !showMobileFilters}
+            on:click={() => (showMobileFilters = !showMobileFilters)}
         />
     </div>
 
     <!-- Filters -->
     <div
-        class={`mb-8 pb-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${showMobileFilters ? '' : 'hidden sm:flex'}`}
+        class={`mb-8 pb-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${showMobileFilters ? "" : "hidden sm:flex"}`}
     >
         <h2 class="sr-only">Filter Kompetisi</h2>
         <div class="flex-1 flex flex-col sm:flex-row gap-4 w-full">
             <!-- Category Filter -->
             <div>
-                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                <select 
+                <label
+                    for="category"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Kategori</label
+                >
+                <select
                     id="category"
                     bind:value={selectedCategory}
                     class="filter-select w-full sm:w-48 rounded-lg px-4 py-3 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm h-12"
@@ -319,8 +351,12 @@
 
             <!-- Status Filter -->
             <div>
-                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select 
+                <label
+                    for="status"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                    >Status</label
+                >
+                <select
                     id="status"
                     bind:value={selectedStatus}
                     class="filter-select w-full sm:w-48 rounded-lg px-4 py-3 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm h-12"
@@ -343,21 +379,18 @@
 
     <!-- Competitions Grid -->
     {#if loading && competitions.length === 0}
-	    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-	        {#each Array(9) as _}
-	            <div class="bg-gray-100 rounded-xl p-6 animate-pulse">
-	                <div class="h-8 bg-gray-200 rounded mb-4"></div>
-	                <div class="h-4 bg-gray-200 rounded mb-2"></div>
-	                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-	            </div>
-	        {/each}
-	    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {#each Array(9) as _}
+                <div class="bg-gray-100 rounded-xl p-6 animate-pulse">
+                    <div class="h-8 bg-gray-200 rounded mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+            {/each}
+        </div>
     {:else if error}
         <div class="py-8">
-            <FullWidthMessage
-                text="Gagal memuat kompetisi"
-                subtext={error}
-            />
+            <FullWidthMessage text="Gagal memuat kompetisi" subtext={error} />
         </div>
     {:else if competitions.length === 0}
         <div class="py-8">
@@ -371,7 +404,9 @@
             {#each competitions as competition}
                 <CompetitionCard
                     {competition}
-                    status={competition.status === 'open' ? 'open' : competition.status}
+                    status={competition.status === "open"
+                        ? "open"
+                        : competition.status}
                 />
             {/each}
         </div>
@@ -383,8 +418,8 @@
             </div>
         {:else if currentPage < totalPages}
             <div class="flex justify-center py-8">
-                <Button 
-                    text="Muat Lebih Banyak" 
+                <Button
+                    text="Muat Lebih Banyak"
                     on:click={loadMore}
                     variant="large"
                 />
