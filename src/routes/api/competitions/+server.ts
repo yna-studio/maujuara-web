@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
 import { getMongoUri } from '../../../configs/mongodb';
+import { TelegramAPI } from '../../../lib/api/telegram';
 
 interface Contact {
 	type: string;
@@ -422,6 +423,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		
 		// Close connection
 		await client.close();
+		
+		// Send Telegram notification after successful creation
+		try {
+			await TelegramAPI.sendNewCompetitionNotification(result.insertedId.toString(), title);
+			console.log('Telegram notification sent successfully for new competition');
+		} catch (telegramError) {
+			console.error('Failed to send Telegram notification:', telegramError);
+			// Don't fail the request if Telegram notification fails
+		}
 		
 		// Return the created competition with its ID
 		return json({

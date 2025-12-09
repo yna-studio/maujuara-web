@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { MongoClient, ObjectId, type MongoClientOptions } from 'mongodb';
 import { getMongoUri } from '../../../../configs/mongodb';
+import { TelegramAPI } from '../../../../lib/api/telegram';
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {
@@ -227,6 +228,15 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				error: 'Failed to update competition',
 				status: 500
 			}, { status: 500 });
+		}
+
+		// Send Telegram notification after successful update
+		try {
+			await TelegramAPI.sendCompetitionUpdateNotification(id, body.title || 'Competition Updated');
+			console.log('Telegram notification sent successfully');
+		} catch (telegramError) {
+			console.error('Failed to send Telegram notification:', telegramError);
+			// Don't fail the request if Telegram notification fails
 		}
 
 		return json({
