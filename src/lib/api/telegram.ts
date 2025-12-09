@@ -24,7 +24,7 @@ export class TelegramAPI {
   private static readonly BASE_URL = 'https://api.telegram.org';
   private static readonly TOKEN = env.TELEGRAM_MJUR_TOKEN || '';
   private static readonly CHANNEL = "@maujuara";
-  private static readonly HOST = env.PUBLIC_HOST || 'http://localhost:20251';
+  private static readonly HOST = env.PUBLIC_HOST || 'https://maujuara.com';
 
   /**
    * Send message to Telegram channel
