@@ -8,7 +8,9 @@
 			.replace(/[^a-z0-9]+/g, '-')
 			.replace(/^-+|-+$/g, '');
 
-	const detailPath = `/competitions/detail/${slugify(`${competition.title}-${competition._id}`)}`;
+	// Handle different data structures for competition ID
+	const competitionId = competition._id || competition.id;
+	const detailPath = `/competitions/detail/${slugify(competition.title)}-${competitionId}`;
 	
 	// Format date for display
 	const formatDate = (dateString: string) => {
