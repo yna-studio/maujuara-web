@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { MongoClient, ObjectId, type MongoClientOptions } from 'mongodb';
 import { getMongoUri } from '../../../../configs/mongodb';
 import { TelegramAPI } from '../../../../lib/api/telegram';
+import { uploadCompetitionPoster } from '../../../../lib/utils/cloudinary';
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {
@@ -198,13 +199,39 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// Prepare update data
 		const now = new Date();
-		const updateData = {
+		let updateData = {
 			...body,
 			updated_date: now.toISOString(),
 			// Convert string IDs to ObjectId if needed
 			category: body.category ? new ObjectId(body.category) : existingCompetition.category,
 			organizer: body.organizer ? new ObjectId(body.organizer) : existingCompetition.organizer
 		};
+
+		// Handle poster upload if it's base64
+		if (body.poster && body.poster.startsWith('data:image/')) {
+			try {
+				const uploadResult = await uploadCompetitionPoster(
+					body.poster, 
+					body.title || existingCompetition.title, 
+					body.deadline_date || existingCompetition.deadline_date
+				);
+				updateData.poster = uploadResult.secure_url;
+			} catch (uploadError) {
+				console.error('Poster upload failed:', uploadError);
+				await client.close();
+				return json({
+					error: 'Failed to upload poster image',
+					message: uploadError instanceof Error ? uploadError.message : 'Unknown upload error',
+					status: 500
+				}, { status: 500 });
+			}
+		} else if (body.poster && !body.poster.startsWith('http')) {
+			await client.close();
+			return json({
+				error: 'Poster must be a valid base64 image string or URL',
+				status: 400
+			}, { status: 400 });
+		}
 
 		// Update competition
 		const result = await competitionsCollection.updateOne(

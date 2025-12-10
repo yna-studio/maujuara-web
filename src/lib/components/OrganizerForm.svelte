@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import ImageUpload from './ImageUpload.svelte';
 
 	export let organizer: any = null;
 	export let form: any = null;
 
 	let loading = false;
-	let logoUrl = organizer?.avatar || '';
+	let avatarBase64: string = '';
 
 	async function handleSubmit() {
 		loading = true;
@@ -14,13 +15,19 @@
 		try {
 			const payload = {
 				name: (document.getElementById('name') as HTMLInputElement)?.value?.trim(),
-				avatar: (document.getElementById('logo_url') as HTMLInputElement)?.value?.trim()
+				avatar: avatarBase64 || organizer?.avatar || ''
 			};
 			
 			// Validate required fields
 			if (!payload.name) {
 				loading = false;
 				alert('Organizer name is required');
+				return;
+			}
+			
+			if (!payload.avatar) {
+				loading = false;
+				alert('Avatar image is required');
 				return;
 			}
 			
@@ -127,35 +134,17 @@
 				/>
 			</div>
 
-			<div>
-				<label for="logo_url" class="block text-sm font-medium text-gray-700 mb-1">URL Logo</label>
-				<input
-					type="url"
-					id="logo_url"
-					name="logo_url"
-					bind:value={logoUrl}
-					placeholder="https://example.com/logo.jpg"
-					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
-				/>
-			</div>
-
 			<div class="md:col-span-2">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Logo Preview</label>
-				{#if logoUrl}
-					<img
-						src={logoUrl}
-						alt="Logo preview"
-						class="w-20 h-auto rounded-md border border-gray-200 shadow-sm"
-						on:error={(e) => {
-							const target = e.target as HTMLImageElement;
-							if (target) {
-								target.style.display = 'none';
-							}
-						}}
-					/>
-				{:else}
-					<p class="text-gray-400 text-sm">No logo image</p>
-				{/if}
+				<ImageUpload
+					id="avatar"
+					label="Avatar Image"
+					bind:value={avatarBase64}
+					oldImageUrl={organizer?.avatar || ''}
+					showOldImage={!!organizer?.avatar}
+					previewSize="w-24 h-24"
+					required={!organizer?.avatar}
+					accept="image/*"
+				/>
 			</div>
 		</div>
 

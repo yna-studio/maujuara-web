@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import ImageUpload from './ImageUpload.svelte';
 
 	export let competition: any = null;
 	export let categories: any[] = [];
@@ -8,7 +9,7 @@
 	export let form: any = null;
 
 	let loading = false;
-	let posterUrl = competition?.poster || '';
+	let posterBase64: string = '';
 	let descriptionContent = competition?.desc || '';
 	let prizeDescriptionContent = competition?.prize_desc || '';
 
@@ -167,7 +168,7 @@
 			// Build custom payload
 			const payload = {
 				title: document.getElementById('title')?.value,
-				poster: document.getElementById('poster_url')?.value || '',
+				poster: posterBase64 || competition?.poster || '',
 				deadline_date: document.getElementById('deadline_date')?.value ? new Date(document.getElementById('deadline_date')?.value).toISOString() : null,
 				announcement_date: document.getElementById('announcement_date')?.value ? new Date(document.getElementById('announcement_date')?.value).toISOString() : null,
 				organizer: selectedOrganizer?._id || selectedOrganizer?.id,
@@ -391,7 +392,7 @@
 			</div>
 
 			<div class="md:col-span-2">
-				<label class="block text-sm font-medium text-gray-700 mb-1">Prize Description</label>
+				<label for="prize-description-editor" class="block text-sm font-medium text-gray-700 mb-1">Prize Description</label>
 				
 				<!-- Toolbar -->
 				<div class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50">
@@ -483,6 +484,7 @@
 				<!-- Editor -->
 				<div
 					contenteditable="true"
+					id="prize-description-editor"
 					bind:this={prizeDescriptionEditor}
 					on:input={updatePrizeDescriptionContent}
 					on:blur={updatePrizeDescriptionContent}
@@ -494,7 +496,7 @@
 			</div>
 
 			<div class="md:col-span-2">
-				<label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+				<label for="description-editor" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
 				
 				<!-- Toolbar -->
 				<div class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50">
@@ -586,6 +588,7 @@
 				<!-- Editor -->
 				<div
 					contenteditable="true"
+					id="description-editor"
 					bind:this={descriptionEditor}
 					on:input={updateDescriptionContent}
 					on:blur={updateDescriptionContent}
@@ -597,29 +600,15 @@
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="poster_url" class="block text-sm font-medium text-gray-700 mb-1">Poster URL</label>
-				<input
-					type="url"
-					id="poster_url"
-					name="poster_url"
-					bind:value={posterUrl}
-					placeholder="https://example.com/poster.jpg"
-					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+				<label for="poster-upload" class="block text-sm font-medium text-gray-700 mb-1">Competition Poster</label>
+				<ImageUpload 
+					bind:value={posterBase64}
+					id="poster-upload"
+					oldImageUrl={competition?.poster || ''}
+					label="Upload competition poster"
+					accept="image/*"
+					previewSize="max-w-[400px] max-h-[300px]"
 				/>
-				
-				{#if posterUrl}
-					<div class="mt-2">
-						<p class="text-sm text-gray-600 mb-1">Poster Preview:</p>
-						<img 
-							src={posterUrl} 
-							alt="Poster preview" 
-							class="max-w-[300px] w-full h-auto rounded border border-gray-200"
-							on:error={(e) => {
-								e.currentTarget.style.display = 'none';
-							}}
-						/>
-					</div>
-				{/if}
 			</div>
 
 			<div class="md:col-span-2">

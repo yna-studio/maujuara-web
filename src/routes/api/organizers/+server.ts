@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { MongoClient, type MongoClientOptions } from 'mongodb';
 import { getMongoUri } from '../../../configs/mongodb';
+import { uploadOrganizerAvatar } from '../../../lib/utils/cloudinary';
 
 export const GET: RequestHandler = async ({ url }) => {
 	try {
@@ -128,6 +129,28 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 400 });
 		}
 		
+		// Validate that avatar is base64
+		if (!avatar.startsWith('data:image/')) {
+			return json({
+				error: 'Avatar must be a valid base64 image string',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		// Upload avatar to Cloudinary
+		let avatarUrl: string;
+		try {
+			const uploadResult = await uploadOrganizerAvatar(avatar, name.trim());
+			avatarUrl = uploadResult.secure_url;
+		} catch (uploadError) {
+			console.error('Avatar upload failed:', uploadError);
+			return json({
+				error: 'Failed to upload avatar image',
+				message: uploadError instanceof Error ? uploadError.message : 'Unknown upload error',
+				status: 500
+			}, { status: 500 });
+		}
+		
 		// Get MongoDB connection
 		const uri = getMongoUri();
 		
@@ -145,7 +168,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const currentTime = new Date().toISOString();
 		const newOrganizer = {
 			name: name.trim(),
-			avatar: avatar.trim(),
+			avatar: avatarUrl, // Store Cloudinary URL instead of base64
 			created_at: currentTime,
 			updated_at: currentTime
 		};

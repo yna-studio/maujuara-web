@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
 import { getMongoUri } from '../../../configs/mongodb';
 import { TelegramAPI } from '../../../lib/api/telegram';
+import { uploadCompetitionPoster } from '../../../lib/utils/cloudinary';
 
 interface Contact {
 	type: string;
@@ -312,6 +313,16 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 400 });
 		}
 		
+		// Validate poster is base64 if it's a new upload
+		if (poster && poster.startsWith('data:image/')) {
+			// It's base64, will be uploaded to Cloudinary
+		} else if (poster && !poster.startsWith('http')) {
+			return json({
+				error: 'Poster must be a valid base64 image string or URL',
+				status: 400
+			}, { status: 400 });
+		}
+		
 		// Validate ObjectId format for organizer
 		if (!ObjectId.isValid(organizer)) {
 			return json({
@@ -390,11 +401,27 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 400 });
 		}
 		
+		// Handle poster upload if it's base64
+		let posterUrl = poster;
+		if (poster.startsWith('data:image/')) {
+			try {
+				const uploadResult = await uploadCompetitionPoster(poster, title, deadline_date);
+				posterUrl = uploadResult.secure_url;
+			} catch (uploadError) {
+				console.error('Poster upload failed:', uploadError);
+				return json({
+					error: 'Failed to upload poster image',
+					message: uploadError instanceof Error ? uploadError.message : 'Unknown upload error',
+					status: 500
+				}, { status: 500 });
+			}
+		}
+		
 		// Create new competition document
 		const currentTime = new Date().toISOString();
 		const newCompetition = {
 			title: title.trim(),
-			poster: poster.trim(),
+			poster: posterUrl.trim(),
 			deadline_date: new Date(deadline_date).toISOString(),
 			announcement_date: new Date(announcement_date).toISOString(),
 			organizer: new ObjectId(organizer),
