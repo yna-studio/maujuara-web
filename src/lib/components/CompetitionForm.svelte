@@ -19,11 +19,11 @@
 	let organizerSearch = competition?.organizer?.name || '';
 	let organizerDropdownOpen = false;
 	let selectedOrganizer: any = null;
+	let searchResults: any[] = [];
+	let searching = false;
 
-	$: filteredOrganizers = organizers?.filter((org: any) => 
-		org.name?.toLowerCase().includes(organizerSearch.toLowerCase()) ||
-		org.email?.toLowerCase().includes(organizerSearch.toLowerCase())
-	) || [];
+	// Initialize with all organizers for display
+	$: filteredOrganizers = searchResults.length > 0 ? searchResults : organizers;
 
 	// Initialize selected organizer
 	$: if (competition?.organizer && !selectedOrganizer) {
@@ -51,6 +51,42 @@
 	function clearOrganizer() {
 		selectedOrganizer = null;
 		organizerSearch = '';
+		searchResults = [];
+	}
+
+	// Backend search function
+	async function searchOrganizers(query: string) {
+		if (!query.trim()) {
+			searchResults = [];
+			return;
+		}
+
+		try {
+			searching = true;
+			const response = await fetch(`/api/organizers?search=${encodeURIComponent(query.trim())}&limit=20`);
+			if (response.ok) {
+				const data = await response.json();
+				searchResults = data.data || [];
+			}
+		} catch (error) {
+			console.error('Error searching organizers:', error);
+			searchResults = [];
+		} finally {
+			searching = false;
+		}
+	}
+
+	// Debounced search
+	let searchTimeout: NodeJS.Timeout;
+	function handleOrganizerSearch() {
+		clearTimeout(searchTimeout);
+		if (organizerSearch.trim()) {
+			searchTimeout = setTimeout(() => {
+				searchOrganizers(organizerSearch);
+			}, 300);
+		} else {
+			searchResults = [];
+		}
 	}
 
 	function formatDateForInput(dateStr?: string) {
@@ -277,6 +313,7 @@
 						name="organizer"
 						bind:value={organizerSearch}
 						on:focus={() => organizerDropdownOpen = true}
+						on:input={handleOrganizerSearch}
 						on:keydown={(e) => {
 							if (e.key === 'Escape') {
 								organizerDropdownOpen = false;
@@ -302,22 +339,26 @@
 						▼
 					</button>
 					
-					{#if organizerDropdownOpen && filteredOrganizers.length > 0}
+					{#if organizerDropdownOpen && (searching || filteredOrganizers.length > 0)}
 						<div class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-							{#each filteredOrganizers as org}
-								<button
-									type="button"
-									on:click={() => selectOrganizer(org)}
-									class="w-full px-3 py-2 text-left hover:bg-gray-100 flex flex-col"
-								>
-									<span class="font-medium">{org.name}</span>
-									{#if org.email}
-										<span class="text-sm text-gray-500">{org.email}</span>
-									{/if}
-								</button>
-							{/each}
+							{#if searching}
+								<div class="px-3 py-2 text-gray-500 text-sm">Searching...</div>
+							{:else}
+								{#each filteredOrganizers as org}
+									<button
+										type="button"
+										on:click={() => selectOrganizer(org)}
+										class="w-full px-3 py-2 text-left hover:bg-gray-100 flex flex-col"
+									>
+										<span class="font-medium">{org.name}</span>
+										{#if org.email}
+											<span class="text-sm text-gray-500">{org.email}</span>
+										{/if}
+									</button>
+								{/each}
+							{/if}
 						</div>
-					{:else if organizerDropdownOpen && organizerSearch && filteredOrganizers.length === 0}
+					{:else if organizerDropdownOpen && organizerSearch && !searching && filteredOrganizers.length === 0}
 						<div class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
 							<div class="px-3 py-2 text-gray-500">No organizers found</div>
 						</div>

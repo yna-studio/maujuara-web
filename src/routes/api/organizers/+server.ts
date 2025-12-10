@@ -7,11 +7,13 @@ export const GET: RequestHandler = async ({ url }) => {
 	try {
 		// Parse query parameters
 		const limitParam = url.searchParams.get('limit');
+		const pageParam = url.searchParams.get('page');
 		const orderBy = url.searchParams.get('orderBy');
 		const search = url.searchParams.get('search');
 		
 		// Set defaults and validate
-		const limit = limitParam ? parseInt(limitParam, 10) : 10;
+		const limit = limitParam ? parseInt(limitParam, 10) : 15;
+		const page = pageParam ? parseInt(pageParam, 10) : 1;
 		const validOrderByFields = ['updated_at', 'created_at'];
 		const orderByField = validOrderByFields.includes(orderBy || '') ? orderBy : 'created_at';
 		
@@ -19,6 +21,14 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (isNaN(limit) || limit < 1 || limit > 100) {
 			return json({
 				error: 'Invalid limit parameter. Must be a number between 1 and 100.',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		// Validate page
+		if (isNaN(page) || page < 1) {
+			return json({
+				error: 'Invalid page parameter. Must be a number greater than 0.',
 				status: 400
 			}, { status: 400 });
 		}
@@ -47,10 +57,16 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sort: Record<string, 1 | -1> = {};
 sort[orderByField!] = -1; // Sort by specified field in descending order
 		
-		// Execute query
+		// Execute query with pagination
+		const skip = (page - 1) * limit;
+		
+		// Get total count for pagination metadata
+		const totalCount = await organizersCollection.countDocuments(query);
+		
 		const organizers = await organizersCollection
 			.find(query)
 			.sort(sort)
+			.skip(skip)
 			.limit(limit)
 			.toArray();
 		
@@ -70,9 +86,13 @@ sort[orderByField!] = -1; // Sort by specified field in descending order
 			status: 200,
 			meta: {
 				limit,
+				page,
 				orderBy: orderByField,
 				search: search || null,
-				count: organizers.length
+				count: organizers.length,
+				totalCount,
+				totalPages: Math.ceil(totalCount / limit),
+				hasNextPage: page < Math.ceil(totalCount / limit)
 			}
 		});
 		

@@ -21,6 +21,18 @@ export class OrganizersAPI {
         }
         return apiCaller.get<OrganizersResponse>('/organizers', params);
     }
+
+    // Get organizers with pagination
+    static async getOrganizersWithPagination(limit: number, page: number, orderBy?: string, search?: string): Promise<OrganizersResponse> {
+        const params: Record<string, any> = { limit, page };
+        if (orderBy) {
+            params.orderBy = orderBy;
+        }
+        if (search) {
+            params.search = search;
+        }
+        return apiCaller.get<OrganizersResponse>('/organizers', params);
+    }
 }
 
 export default OrganizersAPI;
