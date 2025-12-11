@@ -443,7 +443,7 @@
                             Deskripsi Kompetisi
                         </h2>
                         <div
-                            class="prose prose-sm max-w-none competition-description"
+                            class="prose prose-sm max-w-none competition-description "
                         >
                             {@html competition.desc ||
                                 "<p>Tidak ada deskripsi tersedia.</p>"}
@@ -714,17 +714,7 @@
         overflow-wrap: break-word;
     }
 
-    .prose.prose-sm.competition-description a {
-        color: #d30808 !important;
-        text-decoration: underline;
-        font-weight: 500;
-    }
-
-    .prose.prose-sm.competition-description a:hover {
-        color: #b10606 !important;
-        text-decoration: none;
-    }
-
+   
     /* Contact links wrapping */
     .contact-link {
         word-wrap: break-word;

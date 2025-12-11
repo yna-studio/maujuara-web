@@ -114,3 +114,18 @@ ol {
 	list-style: decimal !important;
 }
 
+/* competition detail style */
+.competition-description a,
+.competition-description a:link,
+.competition-description a:visited,
+.competition-description a:active {
+	color: #d30808 !important;
+	text-decoration: underline;
+	font-weight: 500;
+}
+
+.competition-description a:hover {
+	color: #b10606 !important;
+	text-decoration: none;
+}
+/* end ofcompetition detail style */
