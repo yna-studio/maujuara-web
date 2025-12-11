@@ -39,12 +39,29 @@ select {
 	margin-bottom: 0.5em;
 }
 
-[contenteditable] h1 { font-size: 2em; }
-[contenteditable] h2 { font-size: 1.5em; }
-[contenteditable] h3 { font-size: 1.17em; }
-[contenteditable] h4 { font-size: 1em; }
-[contenteditable] h5 { font-size: 0.83em; }
-[contenteditable] h6 { font-size: 0.67em; }
+[contenteditable] h1 {
+	font-size: 2em;
+}
+
+[contenteditable] h2 {
+	font-size: 1.5em;
+}
+
+[contenteditable] h3 {
+	font-size: 1.17em;
+}
+
+[contenteditable] h4 {
+	font-size: 1em;
+}
+
+[contenteditable] h5 {
+	font-size: 0.83em;
+}
+
+[contenteditable] h6 {
+	font-size: 0.67em;
+}
 
 [contenteditable] strong,
 [contenteditable] b {
@@ -80,4 +97,20 @@ select {
 	color: #2563eb;
 }
 
+
+ul,
+ol {
+	margin: 1rem 0 1rem 1rem !important;
+}
+
+ul {
+	margin: 1rem 0 1rem 1rem !important;
+	list-style-type: disc !important;
+	list-style: disc !important;
+}
+
+ol {
+	list-style-type: decimal !important;
+	list-style: decimal !important;
+}
 

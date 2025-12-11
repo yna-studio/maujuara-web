@@ -636,6 +636,7 @@
 
 <style>
     /* Custom styles for competition description */
+
     .competition-description h2 {
         font-size: 1.5rem;
         font-weight: 600;
@@ -665,23 +666,23 @@
     }
 
     .competition-description ol {
-        list-style-type: decimal;
-        padding-left: 5px;
-        margin: 1rem 0;
+        list-style-type: decimal !important;
+        padding-left: 0;
+        margin: 1rem 0 1rem 1rem !important;
     }
 
     .competition-description ul {
-        list-style-type: disc;
-        padding-left: 5px;
-        margin: 1rem 0;
+        list-style-type: disc !important;
+        padding-left: 0;
+        margin: 1rem 0 1rem 1rem !important;
     }
 
     .competition-description ol li,
     .competition-description ul li {
         margin-bottom: 0.5rem;
-        list-style-position: outside;
-        padding-left: 0px;
-        text-indent: 0;
+        list-style-position: inside;
+        padding-left: 1rem;
+        text-indent: -1rem;
     }
 
     /* Nested lists styling */
@@ -713,14 +714,14 @@
         overflow-wrap: break-word;
     }
 
-    .competition-description a {
-        color: rgb(239 68 68) !important; /* red-600 */
+    .prose.prose-sm.competition-description a {
+        color: #d30808 !important;
         text-decoration: underline;
         font-weight: 500;
     }
 
-    .competition-description a:hover {
-        color: rgb(220 38 38) !important; /* red-700 */
+    .prose.prose-sm.competition-description a:hover {
+        color: #b10606 !important;
         text-decoration: none;
     }
 
