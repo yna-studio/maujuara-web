@@ -427,6 +427,7 @@
                                 )}
                             </p>
                         {/if}
+                        <br/>
                         <div
                             class="prose prose-sm max-w-none competition-description"
                         >
