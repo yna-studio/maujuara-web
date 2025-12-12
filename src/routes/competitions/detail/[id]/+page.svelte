@@ -421,13 +421,12 @@
                     >
                         <h2 class="text-base font-semibold mb-3">Hadiah</h2>
                         {#if competition.prize_estimate}
-                            <p class="mb-1">
+                            <p class="mb-4">
                                 Estimasi Total Hadiah Rp : {competition.prize_estimate.toLocaleString(
                                     "id-ID",
                                 )}
                             </p>
                         {/if}
-                        <br/>
                         <div
                             class="prose prose-sm max-w-none competition-description"
                         >
