@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { NewsAPI } from '$lib/api/news';
 	import './+page.css';
+	import type { PageData } from './$types';
+
+	// Server data
+	export let data: PageData;
 
 	// Type definitions
 	interface News {
@@ -24,47 +27,19 @@
 		created_by: string;
 	}
 
-	// Data states
-	let news: News | null = null;
-	let loading = true;
-	let error: string | null = null;
-
-	// Extract ID from slug (format: title-id)
-	function extractIdFromSlug(slug: string): string {
-		const parts = slug.split('-');
-		return parts[parts.length - 1] || '';
+	interface Competition {
+		_id: string;
+		title: string;
+		poster: string;
+		deadline_date: string;
+		prize_estimate: number;
+		status: string;
 	}
 
-	onMount(async () => {
-		if (!browser) return;
-
-		try {
-			const slug = $page.params.id;
-			const newsId = extractIdFromSlug(slug);
-
-			if (!newsId) {
-				error = 'Invalid news ID';
-				loading = false;
-				return;
-			}
-
-			// Fetch news detail
-			const response = await fetch(`/api/news/${newsId}`);
-			const result = await response.json();
-
-			if (!response.ok) {
-				error = result.error || 'Failed to fetch news';
-				loading = false;
-				return;
-			}
-
-			news = result.data;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'An error occurred';
-		} finally {
-			loading = false;
-		}
-	});
+	// Use server-side data
+	let news: News | null = data.news || null;
+	let error: string | null = data.error || null;
+	let loading = false;
 
 	// Format date
 	function formatDate(dateString: string): string {
@@ -74,6 +49,16 @@
 			month: 'long',
 			year: 'numeric'
 		});
+	}
+
+	// Generate competition URL
+	function generateCompetitionUrl(competition: Competition): string {
+		const slug = competition.title
+			.toLowerCase()
+			.replace(/[^\w\s-]/g, '')
+			.replace(/[\s_-]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+		return `/competitions/detail/${slug}-${competition._id}`;
 	}
 </script>
 
@@ -88,7 +73,7 @@
 <div class="min-h-screen bg-gray-50">
 	<!-- Loading State -->
 	{#if loading}
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 			<div class="animate-pulse">
 				<div class="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
 				<div class="h-64 bg-gray-200 rounded mb-6"></div>
@@ -101,7 +86,7 @@
 		</div>
 	{:else if error}
 		<!-- Error State -->
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 			<div class="bg-red-50 border border-red-200 rounded-lg p-6">
 				<div class="flex items-center">
 					<svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -185,6 +170,56 @@
 			<div class="prose prose-lg max-w-none">
 				{@html news.content}
 			</div>
+
+			<!-- Related Competitions Section -->
+			{#if data.relatedCompetitions && data.relatedCompetitions.length > 0}
+				<section class="mt-12 pt-8 border-t border-gray-200">
+					<h2 class="text-2xl font-bold text-gray-900 mb-6">
+						Ikuti Kompetisi di MauJuara
+					</h2>
+					<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+						{#each data.relatedCompetitions as competition}
+							<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+								<a href={generateCompetitionUrl(competition)} class="block">
+									<div class="aspect-w-16 aspect-h-9 bg-gray-100">
+										<img
+											src={competition.poster || '/placeholder-competition.jpg'}
+											alt={competition.title}
+											class="w-full h-24 object-cover"
+											onerror={(e) => {
+												e.currentTarget.src = '/placeholder-competition.jpg';
+											}}
+										/>
+									</div>
+									<div class="p-3">
+										<h3 class="font-medium text-xs text-gray-900 line-clamp-2 mb-1">
+											{competition.title}
+										</h3>
+										{#if competition.prize_estimate}
+											<div class="text-xs text-gray-600 mb-1">
+												Rp {competition.prize_estimate.toLocaleString('id-ID')}
+											</div>
+										{/if}
+										<div class="flex items-center justify-between">
+											<span class="text-xs text-gray-500">
+												{formatDate(competition.deadline_date)}
+											</span>
+											<span class="text-xs px-1.5 py-0.5 rounded-full 
+												{competition.status === 'open' ? 'bg-green-100 text-green-800' : 
+												 competition.status === 'progress' ? 'bg-yellow-100 text-yellow-800' : 
+												 'bg-red-100 text-red-800'}">
+												{competition.status === 'open' ? 'Open' : 
+												 competition.status === 'progress' ? 'Berlangsung' : 
+												 'Berakhir'}
+											</span>
+										</div>
+									</div>
+								</a>
+							</div>
+						{/each}
+					</div>
+				</section>
+			{/if}
 
 			<!-- Footer -->
 			<footer class="mt-12 pt-8 border-t border-gray-200">

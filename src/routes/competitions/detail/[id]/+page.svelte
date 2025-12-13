@@ -336,6 +336,17 @@
                     <button
                         type="button"
                         class={`pb-2 border-b-2 transition-colors duration-150 ${
+                            activeTab === "contacts"
+                                ? "border-red-600 text-red-600 font-semibold"
+                                : "border-transparent text-gray-600 hover:text-red-600"
+                        }`}
+                        on:click={() => (activeTab = "contacts")}
+                    >
+                        Kontak
+                    </button>
+                    <button
+                        type="button"
+                        class={`pb-2 border-b-2 transition-colors duration-150 ${
                             activeTab === "discussions"
                                 ? "border-red-600 text-red-600 font-semibold"
                                 : "border-transparent text-gray-600 hover:text-red-600"
@@ -528,6 +539,105 @@
                             </div>
                         </div>
                     {/if}
+                {:else if activeTab === "contacts"}
+                    <!-- Contacts Tab -->
+                    <section class="bg-white rounded-xl shadow p-5 text-sm text-gray-700">
+                        
+                        {#if competition.contacts && competition.contacts.length > 0}
+                            <div class="space-y-3">
+                                {#each competition.contacts as contact}
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                                {#if contact.type === 'email'}
+                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                                    </svg>
+                                                {:else if contact.type === 'phone' || contact.type === 'whatsapp'}
+                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                    </svg>
+                                                {:else if contact.type === 'instagram'}
+                                                    <svg class="w-4 h-4 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.058 1.645-.07 4.849-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+                                                    </svg>
+                                                {:else if contact.type === 'website'}
+                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zM9.954 4.569c-.768.926-1.298 2.46-1.404 4.431h2.89c-.106-1.97-.636-3.505-1.404-4.43a2.996 2.996 0 00-.082 0zM14.083 9h-1.946c-.089 1.546-.383 2.97-.837 4.118A6.004 6.004 0 0014.083 9zM9.954 15.431c.768-.926 1.298-2.46 1.404-4.431h-2.89c.106 1.97.636 3.505 1.404 4.43a2.996 2.996 0 00.082 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {:else}
+                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {/if}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900 capitalize">{contact.type}</p>
+                                                <p class="text-gray-600">{contact.value}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            {#if contact.type === 'email'}
+                                                <a 
+                                                    href="mailto:{contact.value}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                                >
+                                                    Email
+                                                </a>
+                                            {:else if contact.type === 'phone'}
+                                                <a 
+                                                    href="tel:{contact.value}"
+                                                    class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                                >
+                                                    Call
+                                                </a>
+                                            {:else if contact.type === 'whatsapp'}
+                                                <a 
+                                                    href="https://wa.me/{contact.value.replace(/[^0-9]/g, '')}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                                >
+                                                    WhatsApp
+                                                </a>
+                                            {:else if contact.type === 'instagram'}
+                                                <a 
+                                                    href="https://instagram.com/{contact.value.replace('@', '')}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="px-3 py-1 bg-pink-600 text-white text-xs rounded hover:bg-pink-700 transition-colors"
+                                                >
+                                                    Instagram
+                                                </a>
+                                            {:else if contact.type === 'website'}
+                                                <a 
+                                                    href="{contact.value.startsWith('http') ? contact.value : `https://${contact.value}`}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                                >
+                                                    Visit
+                                                </a>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="text-center py-8">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-500">Belum ada informasi kontak tersedia</p>
+                            </div>
+                        {/if}
+                    </section>
                 {:else}
                     <!-- Discussions Tab with Facebook Comments -->
                     <section
