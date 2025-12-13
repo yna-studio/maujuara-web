@@ -5,6 +5,19 @@ import { getMongoUri } from '../../../configs/mongodb';
 import { TelegramAPI } from '../../../lib/api/telegram';
 import { uploadCompetitionPoster } from '../../../lib/utils/cloudinary';
 
+// Helper function to remove HTML tags and truncate text
+function generateShortDesc(content: string, maxLength: number = 150): string {
+	if (!content) return '';
+	
+	// Remove HTML tags
+	const cleanText = content.replace(/<[^>]*>/g, '').trim();
+	
+	// Truncate to maxLength characters
+	if (cleanText.length <= maxLength) return cleanText;
+	
+	return cleanText.substring(0, maxLength) + '...';
+}
+
 interface Contact {
 	type: string;
 	value: string;
@@ -256,7 +269,9 @@ export const GET: RequestHandler = async ({ url }) => {
 		return json({
 			data: competitions.map(comp => ({
 				...comp,
-				_id: comp._id.toString()
+				_id: comp._id.toString(),
+				// Generate shortdesc in JavaScript
+				shortdesc: generateShortDesc(comp.desc || '', 150)
 			})),
 			status: 200,
 			meta: {
