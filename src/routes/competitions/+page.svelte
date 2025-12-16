@@ -14,6 +14,9 @@
     import { CompetitionsAPI } from "$lib/api/competitions";
     import { CategoriesAPI } from "$lib/api/categories";
     import { OrganizersListAPI } from "$lib/api/organizersList";
+    import type { PageData } from './$types';
+
+    export let data: PageData;
 
     // Type definitions
     interface Competition {
@@ -50,12 +53,18 @@
         name: string;
     }
 
-    // Data states
-    let competitions: Competition[] = [];
-    let categories: Category[] = [];
-    let organizers: Array<{ id: string; name: string }> = [];
-    let loading = browser; // Only show loading state in browser
-    let error: string | null = null;
+    // Data states - initialize from server data
+    let competitions: Competition[] = data.competitions || [];
+    let categories: Category[] = data.categories || [];
+    let organizers: Array<{ id: string; name: string }> = data.organizers || [];
+    let loading = false; // Start with false since we have server data
+    let error: string | null = data.error;
+    let totalCount = data.totalCount || 0;
+    let totalPages = data.totalPages || 1;
+    let currentPage = data.currentPage || 1;
+    let pageTitle = data.pageTitle || "Jelajah Kompetisi";
+    let metaDescription = data.metaDescription || "Temukan dan ikuti berbagai kompetisi online yang sesuai dengan minat dan kemampuan Anda.";
+    let hasLoadedFromServer = !!data.competitions; // Track if we have initial server data
 
     // Filter states - initialize from URL parameters
     let selectedCategory = "";
@@ -71,13 +80,7 @@
     ];
 
     // Pagination
-    let currentPage = 1;
     const itemsPerPage = 9;
-    let totalCount = 0;
-    let totalPages = 1;
-
-    // Dynamic page title based on selected category
-    let pageTitle = "Jelajah Kompetisi";
 
     // Reset to first page and refetch whenever URL search params change
     let lastSearchParams = "";
@@ -97,6 +100,7 @@
     $: {
         const categoryId = $page.url.searchParams.get("category");
         const statusParam = $page.url.searchParams.get("status");
+        const tagParam = $page.url.searchParams.get("tag");
         const organizerId =
             $page.url.searchParams.get("organizer_id") ||
             $page.url.searchParams.get("organizer");
@@ -115,7 +119,9 @@
         // Build base title
         let baseTitle = "Jelajah Kompetisi";
 
-        if (statusLabel) {
+        if (tagParam) {
+            baseTitle = `Jelajah Kompetisi - Tag: ${tagParam}`;
+        } else if (statusLabel) {
             // With status in query
             if (category) {
                 baseTitle = `Jelajah Kompetisi - Kategori ${category.name} - ${statusLabel}`;
@@ -141,7 +147,7 @@
         document.title = pageTitle;
     }
 
-    // Fetch data on mount (browser only)
+    // Fetch data on mount (browser only) - only if not already loaded from server
     onMount(async () => {
         if (!browser) return;
 
@@ -154,11 +160,16 @@
             "";
         selectedStatus = $page.url.searchParams.get("status") || "";
 
-        await Promise.all([
-            fetchCategories(),
-            fetchOrganizers(),
-            fetchCompetitions(),
-        ]);
+        // Only fetch if we don't have server data or if URL params changed
+        if (categories.length === 0 || organizers.length === 0) {
+            await Promise.all([
+                fetchCategories(),
+                fetchOrganizers()
+            ]);
+        }
+
+        // Always fetch competitions for client-side navigation/filtering
+        await fetchCompetitions();
     });
 
     async function fetchCategories() {
@@ -203,17 +214,27 @@
             if (urlParams.get("status"))
                 params.status = urlParams.get("status");
 
+            if (urlParams.get("tag"))
+                params.tag = urlParams.get("tag");
+
             const response = await CompetitionsAPI.getCompetitions(params);
+            
+            // Update competitions data
             if (currentPage === 1) {
-                competitions = response.data;
+                competitions = response.data || [];
             } else {
-                competitions = [...competitions, ...response.data];
+                competitions = [...competitions, ...(response.data || [])];
             }
+            
             totalCount = response.meta?.totalCount || 0;
             totalPages = response.meta?.totalPages || 1;
+            
+            // Clear error if successful
+            error = null;
         } catch (err) {
             console.error("Failed to fetch competitions:", err);
             error = "Gagal memuat kompetisi";
+            // Don't clear existing competitions on error
         } finally {
             loading = false;
         }
@@ -283,6 +304,17 @@
         return () => window.removeEventListener("scroll", handleScroll);
     });
 </script>
+
+<svelte:head>
+    <title>{pageTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+</svelte:head>
 
 <main class="max-w-5xl mx-auto px-4 py-8">
     <Subtitle text={pageTitle}>
@@ -379,6 +411,7 @@
 
     <!-- Competitions Grid -->
     {#if loading && competitions.length === 0}
+        <!-- Show skeletons when first loading and no data yet -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {#each Array(9) as _}
                 <div class="bg-gray-100 rounded-xl p-6 animate-pulse">
@@ -389,17 +422,20 @@
             {/each}
         </div>
     {:else if error}
+        <!-- Show error state -->
         <div class="py-8">
             <FullWidthMessage text="Gagal memuat kompetisi" subtext={error} />
         </div>
-    {:else if competitions.length === 0}
+    {:else if !loading && competitions.length === 0 && hasLoadedFromServer}
+        <!-- Show not found when not loading and we have attempted to load -->
         <div class="py-8">
             <FullWidthMessage
                 text="Kompetisi tidak ditemukan"
                 subtext="Coba ubah filter atau hapus beberapa pilihan untuk melihat kompetisi lainnya."
             />
         </div>
-    {:else}
+    {:else if competitions.length > 0}
+        <!-- Show competitions when data is available -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {#each competitions as competition}
                 <CompetitionCard

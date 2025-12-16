@@ -97,6 +97,8 @@ export const GET: RequestHandler = async ({ params }) => {
 						desc: 1,
 						contacts: 1,
 						link_join: 1,
+						link_source: 1,
+						tags: 1,
 						status: 1,
 						category: {
 							id: { $toString: '$category._id' },
@@ -204,7 +206,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updated_date: now.toISOString(),
 			// Convert string IDs to ObjectId if needed
 			category: body.category ? new ObjectId(body.category) : existingCompetition.category,
-			organizer: body.organizer ? new ObjectId(body.organizer) : existingCompetition.organizer
+			organizer: body.organizer ? new ObjectId(body.organizer) : existingCompetition.organizer,
+			// Handle tags array
+			tags: body.tags ? (Array.isArray(body.tags) ? body.tags.map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : []) : existingCompetition.tags,
+			// Handle link_source
+			link_source: body.link_source !== undefined ? (body.link_source ? body.link_source.trim() : null) : existingCompetition.link_source
 		};
 
 		// Handle poster upload if it's base64
@@ -238,6 +244,48 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			{ _id: new ObjectId(id) },
 			{ $set: updateData }
 		);
+
+		// Handle tags collection updates
+		const oldTags = existingCompetition.tags || [];
+		const newTags = updateData.tags || [];
+		const tagsCollection = db.collection('tags');
+		
+		// Tags to remove (in old but not in new)
+		const tagsToRemove = oldTags.filter((tag: string) => !newTags.includes(tag));
+		// Tags to add (in new but not in old)
+		const tagsToAdd = newTags.filter((tag: string) => !oldTags.includes(tag));
+		
+		// Decrease total for removed tags
+		for (const tagName of tagsToRemove) {
+			const trimmedTag = tagName.trim().toLowerCase();
+			await tagsCollection.updateOne(
+				{ name: trimmedTag },
+				{ $inc: { total: -1 }, $set: { updated_at: now.toISOString() } }
+			);
+		}
+		
+		// Increase total for added tags
+		for (const tagName of tagsToAdd) {
+			if (tagName.trim()) {
+				const trimmedTag = tagName.trim().toLowerCase();
+				
+				// Try to update existing tag first
+				const updateResult = await tagsCollection.updateOne(
+					{ name: trimmedTag },
+					{ $inc: { total: 1 }, $set: { updated_at: now.toISOString() } }
+				);
+				
+				// If tag doesn't exist, insert it with total = 1
+				if (updateResult.matchedCount === 0) {
+					await tagsCollection.insertOne({
+						name: trimmedTag,
+						total: 1,
+						created_at: now.toISOString(),
+						updated_at: now.toISOString()
+					});
+				}
+			}
+		}
 
 		// Update organizer's updated_at if organizer changed
 		if (body.organizer && body.organizer !== existingCompetition.organizer?.toString()) {

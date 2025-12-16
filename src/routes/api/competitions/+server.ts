@@ -35,6 +35,8 @@ interface CompetitionData {
 	desc: string;
 	contacts: Contact[];
 	link_join: string;
+	link_source?: string;
+	tags?: string[];
 }
 
 interface GetCompetitionsParams {
@@ -42,12 +44,13 @@ interface GetCompetitionsParams {
 	id_organizer: string | null;
 	id_category: string | null;
 	status: string | null;
+	tag: string | null;
 	limit: number;
 	page: number;
 }
 
 async function getCompetitions(params: GetCompetitionsParams) {
-	const { search, id_organizer, id_category, status, limit, page } = params;
+	const { search, id_organizer, id_category, status, tag, limit, page } = params;
 
 	// Get MongoDB connection
 	const uri = getMongoUri();
@@ -79,6 +82,11 @@ async function getCompetitions(params: GetCompetitionsParams) {
 		// Add category filter
 		if (id_category) {
 			query.category = new ObjectId(id_category);
+		}
+
+		// Add tag filter
+		if (tag) {
+			query.tags = { $in: [tag.trim().toLowerCase()] };
 		}
 
 		// Add status filter based on dates
@@ -166,6 +174,8 @@ async function getCompetitions(params: GetCompetitionsParams) {
 						desc: 1,
 						contacts: 1,
 						link_join: 1,
+						link_source: 1,
+						tags: 1,
 						status: 1,
 						category: {
 							id: { $toString: '$category._id' },
@@ -209,6 +219,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const id_organizer = url.searchParams.get('id_organizer');
 		const id_category = url.searchParams.get('id_category');
 		const status = url.searchParams.get('status');
+		const tag = url.searchParams.get('tag');
 		const limitParam = url.searchParams.get('limit');
 		const pageParam = url.searchParams.get('page');
 		
@@ -262,6 +273,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				id_organizer: id_organizer || null,
 				id_category: id_category || null,
 				status: status || null,
+				tag: tag || null,
 				limit,
 				page
 			});
@@ -284,7 +296,8 @@ export const GET: RequestHandler = async ({ url }) => {
 				filters: {
 					search: search || null,
 					id_organizer: id_organizer || null,
-					status: status || null
+					status: status || null,
+					tag: tag || null
 				}
 			}
 		});
@@ -314,7 +327,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			prize_estimate = 0,
 			desc,
 			contacts,
-			link_join
+			link_join,
+			link_source,
+			tags
 		}: CompetitionData = body;
 		
 		// Validate required fields
@@ -380,6 +395,25 @@ export const POST: RequestHandler = async ({ request }) => {
 					error: 'Each contact must have type and value as strings',
 					status: 400
 				}, { status: 400 });
+			}
+		}
+		
+		// Validate tags array if provided
+		if (tags && !Array.isArray(tags)) {
+			return json({
+				error: 'tags must be an array',
+				status: 400
+			}, { status: 400 });
+		}
+		
+		if (tags) {
+			for (const tag of tags) {
+				if (typeof tag !== 'string' || tag.trim() === '') {
+					return json({
+						error: 'All tags must be non-empty strings',
+						status: 400
+					}, { status: 400 });
+				}
 			}
 		}
 		
@@ -451,11 +485,46 @@ export const POST: RequestHandler = async ({ request }) => {
 				type: contact.type.trim(),
 				value: contact.value.trim()
 			})),
-			link_join: link_join.trim()
+			link_join: link_join.trim(),
+			link_source: link_source ? link_source.trim() : null,
+			tags: tags ? tags.map(tag => tag.trim()).filter(tag => tag.length > 0) : []
 		};
 		
 		// Insert into database
 		const result = await competitionsCollection.insertOne(newCompetition);
+		
+		// Handle tags collection - update or insert tags
+		if (tags && tags.length > 0) {
+			const tagsCollection = db.collection('tags');
+			
+			for (const tagName of tags) {
+				if (tagName.trim()) {
+					const trimmedTag = tagName.trim().toLowerCase();
+					
+					// Try to update existing tag first
+					const updateResult = await tagsCollection.updateOne(
+						{ name: trimmedTag },
+						{ $inc: { total: 1 } }
+					);
+					
+					// If tag doesn't exist, insert it with total = 1
+					if (updateResult.matchedCount === 0) {
+						await tagsCollection.insertOne({
+							name: trimmedTag,
+							total: 1,
+							created_at: currentTime,
+							updated_at: currentTime
+						});
+					} else {
+						// Update the updated_at field for existing tag
+						await tagsCollection.updateOne(
+							{ name: trimmedTag },
+							{ $set: { updated_at: currentTime } }
+						);
+					}
+				}
+			}
+		}
 		
 		// Update organizer's updated_at field
 		await organizersCollection.updateOne(

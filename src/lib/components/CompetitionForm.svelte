@@ -177,6 +177,8 @@
 				desc: descriptionContent || '',
 				contacts: document.getElementById('contact')?.value ? JSON.parse(document.getElementById('contact')?.value) : [],
 				link_join: document.getElementById('join_link')?.value || '',
+				link_source: document.getElementById('link_source')?.value || '',
+				tags: document.getElementById('tags')?.value ? document.getElementById('tags')?.value.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : [],
 				category: document.getElementById('category')?.value
 			};
 			
@@ -375,6 +377,18 @@
 					id="prize_estimation"
 					name="prize_estimation"
 					value={competition?.prize_estimate || ''}
+					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+				/>
+			</div>
+
+			<div>
+				<label for="link_source" class="block text-sm font-medium text-gray-700 mb-1">Link Source</label>
+				<input
+					type="url"
+					id="link_source"
+					name="link_source"
+					value={competition?.link_source || ''}
+					placeholder="https://example.com/source"
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 				/>
 			</div>
@@ -609,6 +623,19 @@
 					accept="image/*"
 					previewSize="max-w-[400px] max-h-[300px]"
 				/>
+			</div>
+
+			<div class="md:col-span-2">
+				<label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+				<textarea
+					id="tags"
+					name="tags"
+					rows="3"
+					value={competition?.tags ? competition.tags.join(', ') : ''}
+					placeholder="Enter tags separated by commas (e.g., design, art, competition)"
+					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+				></textarea>
+				<p class="mt-1 text-sm text-gray-500">Separate multiple tags with commas</p>
 			</div>
 
 			<div class="md:col-span-2">

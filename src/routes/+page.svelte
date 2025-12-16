@@ -28,6 +28,7 @@
 
 	let competitions: Competition[] = data.competitions ?? [];
 	let organizers: Organizer[] = data.organizers ?? [];
+	let tags: any[] = data.tags ?? [];
 	let stats: Stat[] = [];
 	let loading = false;
 	let error: string | null = data.error;
@@ -151,6 +152,35 @@
 			{/each}
 		</div>
 	</section>
+
+	<!-- Tags Section -->
+	{#if tags && tags.length > 0}
+		<section class="mb-16">
+			<div class="text-center mb-8">
+				<h2 class="text-2xl font-bold text-gray-900 mb-2">Topik Populer</h2>
+				<p class="text-gray-600">Temukan kompetisi berdasarkan topik yang kamu minati</p>
+			</div>
+			<div class="flex flex-wrap justify-center gap-3">
+				{#each tags as tag}
+					<a
+						href="/competitions?tag={tag.name}"
+						class="inline-flex items-center px-4 py-2 bg-white border border-gray-400 text-black text-sm font-medium rounded-full hover:bg-gray-50 hover:border-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+					>
+						{tag.name}
+						<span class="ml-2 text-xs text-gray-500">({tag.total})</span>
+					</a>
+				{/each}
+			</div>
+			<!-- <div class="text-center mt-6">
+				<a
+					href="/competitions"
+					class="text-red-600 hover:text-red-700 font-medium text-sm"
+				>
+					View all tags →
+				</a>
+			</div> -->
+		</section>
+	{/if}
 
 	<!-- Kompetisi Terbaru Section -->
 	<section class="mb-16">

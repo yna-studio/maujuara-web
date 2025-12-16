@@ -2,19 +2,22 @@ import type { PageServerLoad } from './$types';
 import { CompetitionsAPI } from '$lib/api/competitions';
 import { OrganizersAPI } from '$lib/api/organizers';
 import { StatsAPI } from '$lib/api/stats';
+import { TagsAPI } from '$lib/api/tags';
 
 export const load: PageServerLoad = async () => {
     try {
-        const [competitionsResponse, organizersResponse, statsResponse] = await Promise.all([
+        const [competitionsResponse, organizersResponse, statsResponse, tagsResponse] = await Promise.all([
             CompetitionsAPI.getCompetitions({ limit: 9 }),
             OrganizersAPI.getOrganizersWithLimit(10, 'updated_at'),
-            StatsAPI.getStats()
+            StatsAPI.getStats(),
+            TagsAPI.getTags({ limit: 12 }) // Get top 12 tags
         ]);
 
         return {
             competitions: competitionsResponse.data,
             organizers: organizersResponse.data,
             statsRaw: statsResponse.data,
+            tags: tagsResponse.data,
             error: null
         };
     } catch (err) {
@@ -23,6 +26,7 @@ export const load: PageServerLoad = async () => {
             competitions: [],
             organizers: [],
             statsRaw: null,
+            tags: [],
             error: 'Failed to load data'
         };
     }
