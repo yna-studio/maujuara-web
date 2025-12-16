@@ -21,10 +21,10 @@ export const GET: RequestHandler = async ({ url }) => {
 		const db = client.db('maujuara');
 		const newsCollection = db.collection('news');
 
-		// Fetch all published news, no limit for SEO
+		// Fetch all news, no limit for SEO
 		const news = await newsCollection
 			.find(
-				{ status: 'published' },
+				{},
 				{
 					projection: {
 						_id: 1,
