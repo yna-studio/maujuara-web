@@ -463,7 +463,7 @@
 
                     <!-- Tags Section -->
                     {#if competition?.tags && competition.tags.length > 0}
-                        <div class="pt-4 pb-2 hidden lg:block">
+                        <div class="pt-4 pb-2 lg:block">
                             <div class="flex flex-wrap gap-2">
                                 {#each competition.tags as tag}
                                     <a
@@ -691,21 +691,7 @@
         <!-- </div> -->
         <!-- </div> -->
         
-        <!-- Mobile Tags Section -->
-        {#if competition?.tags && competition.tags.length > 0}
-            <div class="lg:hidden pb-2 px-4">
-                <div class="flex flex-wrap gap-2">
-                    {#each competition.tags as tag}
-                        <a
-                            href="/competitions?tag={tag}"
-                            class="inline-flex items-center px-3 py-1 bg-white border border-gray-400 text-black text-sm font-medium rounded-full hover:bg-gray-50 hover:border-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        >
-                            {tag}
-                        </a>
-                    {/each}
-                </div>
-            </div>
-        {/if}
+       
         
         <!-- Mobile Sticky Action Button -->
         <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30">
