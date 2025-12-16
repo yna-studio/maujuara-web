@@ -7,20 +7,77 @@
 	import type { LayoutData } from './$types';
 	
 	export let data: LayoutData;
+	
+	// Get competition data from child layouts (if available)
+	$: competitionData = (data as any)?.competition || null;
+	$: newsData = (data as any)?.news || null;
 
 	// Build simple breadcrumb from current path
 	$: segments = $page.url.pathname.split('/').filter(Boolean);
 	$: isHome = segments.length === 0;
 	$: isErrorPage = $page.status && $page.status >= 400;
+	$: isCompetitionDetail = segments[0] === 'competitions' && segments[1] === 'detail';
+	$: isNewsDetail = segments[0] === 'news' && segments[1] === 'detail';
 	const formatSegment = (segment: string) =>
 		segment.charAt(0).toUpperCase() + segment.slice(1);
+	
+	// Special handling for competition and news detail pages
 	$: breadcrumbItems = [
 		{ label: 'Home', href: '/' },
-		...segments.map((segment, index) => ({
-			label: formatSegment(segment),
-			href: '/' + segments.slice(0, index + 1).join('/'),
-		}))
+		...segments.map((segment, index) => {
+			// For competition detail pages, use "Kompetisi" for the competitions segment
+			// and skip the "detail" segment since we'll handle it separately
+			if (isCompetitionDetail) {
+				if (index === 0) {
+					return { label: 'Kompetisi', href: '/competitions' };
+				} else if (index === 1) {
+					// Skip the "detail" segment - we'll add the competition title separately
+					return null;
+				}
+			}
+			
+			// For news detail pages, use "Berita" for the news segment
+			// and skip the "detail" segment since we'll handle it separately
+			if (isNewsDetail) {
+				if (index === 0) {
+					return { label: 'Berita', href: '/news' };
+				} else if (index === 1) {
+					// Skip the "detail" segment - we'll add the news title separately
+					return null;
+				}
+			}
+			
+			// For news main page, use "Berita" instead of "News"
+			if (segment === 'news' && !isNewsDetail) {
+				return { label: 'Berita', href: '/news' };
+			}
+			
+			return {
+				label: formatSegment(segment),
+				href: '/' + segments.slice(0, index + 1).join('/'),
+			};
+		}).filter(Boolean)
 	];
+	
+	// Add competition title for detail pages if we have the data
+	$: if (isCompetitionDetail && competitionData?.title) {
+		// Clean title by removing any ID suffix if present
+		const cleanTitle = competitionData.title.replace(/-[\w\d]+$/, '');
+		breadcrumbItems = [...breadcrumbItems, { 
+			label: cleanTitle, 
+			href: $page.url.pathname 
+		}];
+	}
+	
+	// Add news title for detail pages if we have the data
+	$: if (isNewsDetail && newsData?.title) {
+		// Clean title by removing any ID suffix if present
+		const cleanTitle = newsData.title.replace(/-[\w\d]+$/, '');
+		breadcrumbItems = [...breadcrumbItems, { 
+			label: cleanTitle, 
+			href: $page.url.pathname 
+		}];
+	}
 	
 	// Default SEO metadata
 	$: defaultTitle = data.seo?.defaultTitle || 'MauJuara - Ikuti dan menangkan hadiah dari kompetisi online';
