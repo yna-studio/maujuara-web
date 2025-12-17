@@ -389,7 +389,8 @@
                     </button>
                 </div>
 
-                {#if activeTab === "regulations"}
+                <!-- Regulations Tab Content -->
+                <div class={activeTab === "regulations" ? "block" : "hidden"}>
                     <!-- Meta data -->
                     <section
                         class="bg-white rounded-xl shadow p-5 space-y-3 text-sm text-gray-700"
@@ -418,10 +419,18 @@
                             <span class="font-medium text-gray-500"
                                 >Kategori</span
                             >
-                            <span
-                                >{competition.category?.name ||
-                                    "Uncategorized"}</span
-                            >
+                            {#if competition.category}
+                                <a
+                                    href="/competitions?category={competition
+                                        .category.id ||
+                                        competition.category._id}"
+                                    class="text-red-600 hover:text-red-700 font-medium transition-colors duration-150"
+                                >
+                                    {competition.category.name}
+                                </a>
+                            {:else}
+                                <span>Uncategorized</span>
+                            {/if}
                         </div>
                         <div class="flex justify-between">
                             <span class="font-medium text-gray-500"
@@ -460,7 +469,7 @@
 
                     <!-- Hadiah Section -->
                     <section
-                        class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800"
+                        class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800 mt-6"
                     >
                         <h2 class="text-base font-semibold mb-3">Hadiah</h2>
                         {#if competition.prize_estimate}
@@ -480,7 +489,7 @@
 
                     <!-- Content -->
                     <section
-                        class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800"
+                        class="bg-white rounded-xl shadow p-5 text-sm leading-relaxed text-gray-800 mt-6"
                     >
                         <h2 class="text-base font-semibold mb-3">
                             Deskripsi Kompetisi
@@ -609,8 +618,10 @@
                             </div>
                         </div>
                     {/if}
-                {:else if activeTab === "contacts"}
-                    <!-- Contacts Tab -->
+                </div>
+
+                <!-- Contacts Tab -->
+                <div class={activeTab === "contacts" ? "block" : "hidden"}>
                     <section
                         class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
                     >
@@ -779,8 +790,10 @@
                             </div>
                         {/if}
                     </section>
-                {:else if activeTab === "discussions"}
-                    <!-- Discussions Tab with Facebook Comments -->
+                </div>
+
+                <!-- Discussions Tab with Facebook Comments -->
+                <div class={activeTab === "discussions" ? "block" : "hidden"}>
                     <section
                         class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
                     >
@@ -810,8 +823,10 @@
                             atau periksa koneksi internet Anda.
                         </p>
                     </section>
-                {:else if activeTab === "sources"}
-                    <!-- Sources Tab -->
+                </div>
+
+                <!-- Sources Tab -->
+                <div class={activeTab === "sources" ? "block" : "hidden"}>
                     <section
                         class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
                     >
@@ -853,7 +868,7 @@
                             </div>
                         {/if}
                     </section>
-                {/if}
+                </div>
             </div>
         </div>
         <!-- </div> -->
