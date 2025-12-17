@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import ImageUpload from './ImageUpload.svelte';
+	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
+	import ImageUpload from "./ImageUpload.svelte";
 
 	export let competition: any = null;
 	export let categories: any[] = [];
@@ -9,36 +9,38 @@
 	export let form: any = null;
 
 	let loading = false;
-	let posterBase64: string = '';
-	let descriptionContent = competition?.desc || '';
-	let prizeDescriptionContent = competition?.prize_desc || '';
+	let posterBase64: string = "";
+	let descriptionContent = competition?.desc || "";
+	let prizeDescriptionContent = competition?.prize_desc || "";
 
 	let descriptionEditor: HTMLDivElement;
 	let prizeDescriptionEditor: HTMLDivElement;
 
 	// Searchable select state
-	let organizerSearch = competition?.organizer?.name || '';
+	let organizerSearch = competition?.organizer?.name || "";
 	let organizerDropdownOpen = false;
 	let selectedOrganizer: any = null;
 	let searchResults: any[] = [];
 	let searching = false;
 
 	// Initialize with all organizers for display
-	$: filteredOrganizers = searchResults.length > 0 ? searchResults : organizers;
+	$: filteredOrganizers =
+		searchResults.length > 0 ? searchResults : organizers;
 
 	// Initialize selected organizer
 	$: if (competition?.organizer && !selectedOrganizer) {
-		if (typeof competition.organizer === 'object') {
+		if (typeof competition.organizer === "object") {
 			selectedOrganizer = competition.organizer;
-			organizerSearch = competition.organizer.name || '';
+			organizerSearch = competition.organizer.name || "";
 		} else {
 			// Find organizer by ID
-			selectedOrganizer = organizers?.find((org: any) => 
-				org._id === competition.organizer || 
-				org.id === competition.organizer
+			selectedOrganizer = organizers?.find(
+				(org: any) =>
+					org._id === competition.organizer ||
+					org.id === competition.organizer,
 			);
 			if (selectedOrganizer) {
-				organizerSearch = selectedOrganizer.name || '';
+				organizerSearch = selectedOrganizer.name || "";
 			}
 		}
 	}
@@ -46,12 +48,12 @@
 	function selectOrganizer(org: any) {
 		selectedOrganizer = org;
 		organizerDropdownOpen = false;
-		organizerSearch = org.name || '';
+		organizerSearch = org.name || "";
 	}
 
 	function clearOrganizer() {
 		selectedOrganizer = null;
-		organizerSearch = '';
+		organizerSearch = "";
 		searchResults = [];
 	}
 
@@ -64,13 +66,15 @@
 
 		try {
 			searching = true;
-			const response = await fetch(`/api/organizers?search=${encodeURIComponent(query.trim())}&limit=20`);
+			const response = await fetch(
+				`/api/organizers?search=${encodeURIComponent(query.trim())}&limit=20`,
+			);
 			if (response.ok) {
 				const data = await response.json();
 				searchResults = data.data || [];
 			}
 		} catch (error) {
-			console.error('Error searching organizers:', error);
+			console.error("Error searching organizers:", error);
 			searchResults = [];
 		} finally {
 			searching = false;
@@ -91,9 +95,9 @@
 	}
 
 	function formatDateForInput(dateStr?: string) {
-		if (!dateStr) return '';
+		if (!dateStr) return "";
 		const d = new Date(dateStr);
-		return d.toISOString().split('T')[0];
+		return d.toISOString().split("T")[0];
 	}
 
 	function execCommand(command: string, value?: string) {
@@ -101,13 +105,13 @@
 	}
 
 	function formatHeading(level: number) {
-		execCommand('formatBlock', `h${level}`);
+		execCommand("formatBlock", `h${level}`);
 	}
 
 	function addLink() {
-		const url = prompt('Enter URL:');
+		const url = prompt("Enter URL:");
 		if (url) {
-			execCommand('createLink', url);
+			execCommand("createLink", url);
 		}
 	}
 
@@ -138,96 +142,125 @@
 
 	async function handleSubmit() {
 		loading = true;
-		
+
 		try {
 			// Validate required fields for create
 			if (!competition) {
-				const title = document.getElementById('title')?.value?.trim();
-				const organizerId = selectedOrganizer?._id || selectedOrganizer?.id;
-				const categoryId = document.getElementById('category')?.value;
-				
+				const title = document.getElementById("title")?.value?.trim();
+				const organizerId =
+					selectedOrganizer?._id || selectedOrganizer?.id;
+				const categoryId = document.getElementById("category")?.value;
+
 				if (!title) {
 					loading = false;
-					alert('Title is required');
+					alert("Title is required");
 					return;
 				}
-				
+
 				if (!organizerId) {
 					loading = false;
-					alert('Organizer is required');
+					alert("Organizer is required");
 					return;
 				}
-				
+
 				if (!categoryId) {
 					loading = false;
-					alert('Category is required');
+					alert("Category is required");
 					return;
 				}
 			}
-			
+
 			// Build custom payload
 			const payload = {
-				title: document.getElementById('title')?.value,
-				poster: posterBase64 || competition?.poster || '',
-				deadline_date: document.getElementById('deadline_date')?.value ? new Date(document.getElementById('deadline_date')?.value).toISOString() : null,
-				announcement_date: document.getElementById('announcement_date')?.value ? new Date(document.getElementById('announcement_date')?.value).toISOString() : null,
+				title: document.getElementById("title")?.value,
+				poster: posterBase64 || competition?.poster || "",
+				deadline_date: document.getElementById("deadline_date")?.value
+					? new Date(
+							document.getElementById("deadline_date")?.value,
+						).toISOString()
+					: null,
+				announcement_date: document.getElementById("announcement_date")
+					?.value
+					? new Date(
+							document.getElementById("announcement_date")?.value,
+						).toISOString()
+					: null,
 				organizer: selectedOrganizer?._id || selectedOrganizer?.id,
-				prize_desc: prizeDescriptionContent || '',
-				prize_estimate: document.getElementById('prize_estimation')?.value ? Number(document.getElementById('prize_estimation')?.value) : 0,
-				desc: descriptionContent || '',
-				contacts: document.getElementById('contact')?.value ? JSON.parse(document.getElementById('contact')?.value) : [],
-				link_join: document.getElementById('join_link')?.value || '',
-				link_source: document.getElementById('link_source')?.value || '',
-				tags: document.getElementById('tags')?.value ? document.getElementById('tags')?.value.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : [],
-				category: document.getElementById('category')?.value
+				prize_desc: prizeDescriptionContent || "",
+				prize_estimate: document.getElementById("prize_estimation")
+					?.value
+					? Number(document.getElementById("prize_estimation")?.value)
+					: 0,
+				desc: descriptionContent || "",
+				contacts: document.getElementById("contact")?.value
+					? JSON.parse(document.getElementById("contact")?.value)
+					: [],
+				link_join: document.getElementById("join_link")?.value || "",
+				link_source:
+					document.getElementById("link_source")?.value || "",
+				tags: document.getElementById("tags")?.value
+					? document
+							.getElementById("tags")
+							?.value.split(",")
+							.map((tag: string) => tag.trim())
+							.filter((tag: string) => tag.length > 0)
+					: [],
+				category: document.getElementById("category")?.value,
 			};
-			
-			console.log('Form payload:', payload);
-			
+
+			console.log("Form payload:", payload);
+
 			if (competition) {
 				// Update existing competition
-				const response = await fetch(`/api/competitions/${competition._id}`, {
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json'
+				const response = await fetch(
+					`/api/competitions/${competition._id}`,
+					{
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(payload),
 					},
-					body: JSON.stringify(payload)
-				});
-				
+				);
+
 				const result = await response.json();
-				
+
 				if (response.ok) {
-					console.log('Competition updated successfully:', result);
-					goto('/super/competitions');
+					console.log("Competition updated successfully:", result);
+					goto("/super/competitions");
 				} else {
-					console.error('Failed to update competition:', result);
-					alert(`Error: ${result.error || 'Failed to update competition'}`);
+					console.error("Failed to update competition:", result);
+					alert(
+						`Error: ${result.error || "Failed to update competition"}`,
+					);
 					loading = false;
 				}
 			} else {
 				// Create new competition
-				const response = await fetch('/api/competitions', {
-					method: 'POST',
+				const response = await fetch("/api/competitions", {
+					method: "POST",
 					headers: {
-						'Content-Type': 'application/json'
+						"Content-Type": "application/json",
 					},
-					body: JSON.stringify(payload)
+					body: JSON.stringify(payload),
 				});
-				
+
 				const result = await response.json();
-				
+
 				if (response.ok) {
-					console.log('Competition created successfully:', result);
-					goto('/super/competitions');
+					console.log("Competition created successfully:", result);
+					goto("/super/competitions");
 				} else {
-					console.error('Failed to create competition:', result);
-					alert(`Error: ${result.error || 'Failed to create competition'}`);
+					console.error("Failed to create competition:", result);
+					alert(
+						`Error: ${result.error || "Failed to create competition"}`,
+					);
 					loading = false;
 				}
 			}
 		} catch (error) {
-			console.error('Error saving competition:', error);
-			alert('Error saving competition. Please try again.');
+			console.error("Error saving competition:", error);
+			alert("Error saving competition. Please try again.");
 			loading = false;
 		}
 	}
@@ -236,7 +269,7 @@
 <section class="space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-gray-900">
-			{competition ? 'Edit Competition' : 'Add Competition'}
+			{competition ? "Edit Competition" : "Add Competition"}
 		</h1>
 		<a
 			href="/super/competitions"
@@ -247,27 +280,40 @@
 	</div>
 
 	{#if form?.error}
-		<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
+		<div
+			class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md"
+		>
 			{form.error}
 		</div>
 	{/if}
 
-	<form class="bg-white border border-gray-200 rounded-lg p-6 space-y-6" on:submit|preventDefault={handleSubmit}>
+	<form
+		class="bg-white border border-gray-200 rounded-lg p-6 space-y-6"
+		on:submit|preventDefault={handleSubmit}
+	>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div>
-				<label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+				<label
+					for="title"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Title <span class="text-red-500">*</span></label
+				>
 				<input
 					type="text"
 					id="title"
 					name="title"
-					value={competition?.title || competition?.name || ''}
+					value={competition?.title || competition?.name || ""}
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 					required
 				/>
 			</div>
 
 			<div>
-				<label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+				<label
+					for="category"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Category <span class="text-red-500">*</span></label
+				>
 				<select
 					id="category"
 					name="category"
@@ -275,9 +321,14 @@
 				>
 					<option value="">Select a category</option>
 					{#each categories as category}
-						<option 
+						<option
 							value={category._id || category.id || category.name}
-							selected={(category._id || category.id || category.name) === (competition?.category?._id || competition?.category?.id || competition?.category)}
+							selected={(category._id ||
+								category.id ||
+								category.name) ===
+								(competition?.category?._id ||
+									competition?.category?.id ||
+									competition?.category)}
 						>
 							{category.name}
 						</option>
@@ -286,7 +337,11 @@
 			</div>
 
 			<div>
-				<label for="deadline_date" class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+				<label
+					for="deadline_date"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Deadline <span class="text-red-500">*</span></label
+				>
 				<input
 					type="date"
 					id="deadline_date"
@@ -297,7 +352,11 @@
 			</div>
 
 			<div>
-				<label for="announcement_date" class="block text-sm font-medium text-gray-700 mb-1">Announcement</label>
+				<label
+					for="announcement_date"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Announcement <span class="text-red-500">*</span></label
+				>
 				<input
 					type="date"
 					id="announcement_date"
@@ -308,17 +367,21 @@
 			</div>
 
 			<div>
-				<label for="organizer" class="block text-sm font-medium text-gray-700 mb-1">Organizer</label>
+				<label
+					for="organizer"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Organizer <span class="text-red-500">*</span></label
+				>
 				<div class="relative">
 					<input
 						type="text"
 						id="organizer"
 						name="organizer"
 						bind:value={organizerSearch}
-						on:focus={() => organizerDropdownOpen = true}
+						on:focus={() => (organizerDropdownOpen = true)}
 						on:input={handleOrganizerSearch}
 						on:keydown={(e) => {
-							if (e.key === 'Escape') {
+							if (e.key === "Escape") {
 								organizerDropdownOpen = false;
 							}
 						}}
@@ -336,16 +399,21 @@
 					{/if}
 					<button
 						type="button"
-						on:click={() => organizerDropdownOpen = !organizerDropdownOpen}
+						on:click={() =>
+							(organizerDropdownOpen = !organizerDropdownOpen)}
 						class="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
 					>
 						▼
 					</button>
-					
+
 					{#if organizerDropdownOpen && (searching || filteredOrganizers.length > 0)}
-						<div class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+						<div
+							class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+						>
 							{#if searching}
-								<div class="px-3 py-2 text-gray-500 text-sm">Searching...</div>
+								<div class="px-3 py-2 text-gray-500 text-sm">
+									Searching...
+								</div>
 							{:else}
 								{#each filteredOrganizers as org}
 									<button
@@ -353,63 +421,98 @@
 										on:click={() => selectOrganizer(org)}
 										class="w-full px-3 py-2 text-left hover:bg-gray-100 flex flex-col"
 									>
-										<span class="font-medium">{org.name}</span>
+										<span class="font-medium"
+											>{org.name}</span
+										>
 										{#if org.email}
-											<span class="text-sm text-gray-500">{org.email}</span>
+											<span class="text-sm text-gray-500"
+												>{org.email}</span
+											>
 										{/if}
 									</button>
 								{/each}
 							{/if}
 						</div>
 					{:else if organizerDropdownOpen && organizerSearch && !searching && filteredOrganizers.length === 0}
-						<div class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-							<div class="px-3 py-2 text-gray-500">No organizers found</div>
+						<div
+							class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg"
+						>
+							<div class="px-3 py-2 text-gray-500">
+								No organizers found
+							</div>
 						</div>
 					{/if}
 				</div>
-				<input type="hidden" name="organizer" value={selectedOrganizer?._id || selectedOrganizer?.id || selectedOrganizer?.name || ''} />
+				<input
+					type="hidden"
+					name="organizer"
+					value={selectedOrganizer?._id ||
+						selectedOrganizer?.id ||
+						selectedOrganizer?.name ||
+						""}
+				/>
 			</div>
 
 			<div>
-				<label for="prize_estimation" class="block text-sm font-medium text-gray-700 mb-1">Prize Estimation (IDR)</label>
+				<label
+					for="prize_estimation"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Prize Estimation (IDR)</label
+				>
 				<input
 					type="number"
 					id="prize_estimation"
 					name="prize_estimation"
-					value={competition?.prize_estimate || ''}
+					value={competition?.prize_estimate || ""}
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 				/>
 			</div>
 
 			<div>
-				<label for="link_source" class="block text-sm font-medium text-gray-700 mb-1">Link Source</label>
+				<label
+					for="link_source"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Source Link <span class="text-red-500">*</span></label
+				>
 				<input
 					type="url"
 					id="link_source"
 					name="link_source"
-					value={competition?.link_source || ''}
+					value={competition?.link_source || ""}
 					placeholder="https://example.com/source"
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+					required
 				/>
 			</div>
 
 			<div>
-				<label for="join_link" class="block text-sm font-medium text-gray-700 mb-1">Join Link</label>
+				<label
+					for="join_link"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Join Link</label
+				>
 				<input
 					type="url"
 					id="join_link"
 					name="join_link"
-					value={competition?.link_join || ''}
+					value={competition?.link_join || ""}
 					placeholder="https://example.com/join"
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 				/>
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="prize-description-editor" class="block text-sm font-medium text-gray-700 mb-1">Prize Description</label>
-				
+				<label
+					for="prize-description-editor"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Prize Description <span class="text-red-500">*</span
+					></label
+				>
+
 				<!-- Toolbar -->
-				<div class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50">
+				<div
+					class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50"
+				>
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
@@ -438,7 +541,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('bold')}
+						on:click={() => execCommand("bold")}
 						title="Bold"
 					>
 						<strong>B</strong>
@@ -446,7 +549,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('italic')}
+						on:click={() => execCommand("italic")}
 						title="Italic"
 					>
 						<em>I</em>
@@ -454,7 +557,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('underline')}
+						on:click={() => execCommand("underline")}
 						title="Underline"
 					>
 						<u>U</u>
@@ -463,7 +566,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('insertUnorderedList')}
+						on:click={() => execCommand("insertUnorderedList")}
 						title="Bullet List"
 					>
 						• List
@@ -471,7 +574,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('insertOrderedList')}
+						on:click={() => execCommand("insertOrderedList")}
 						title="Numbered List"
 					>
 						1. List
@@ -488,13 +591,13 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('removeFormat')}
+						on:click={() => execCommand("removeFormat")}
 						title="Clear Formatting"
 					>
 						Clear
 					</button>
 				</div>
-				
+
 				<!-- Editor -->
 				<div
 					contenteditable="true"
@@ -505,15 +608,25 @@
 					class="mt-0 min-h-[150px] p-3 border border-gray-300 border-t-0 rounded-b-md shadow-sm focus:ring-red-500 focus:border-red-500 bg-white"
 					placeholder="Describe the prizes..."
 				></div>
-				
-				<input type="hidden" name="prize_description" bind:value={prizeDescriptionContent} />
+
+				<input
+					type="hidden"
+					name="prize_description"
+					bind:value={prizeDescriptionContent}
+				/>
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="description-editor" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-				
+				<label
+					for="description-editor"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Description <span class="text-red-500">*</span></label
+				>
+
 				<!-- Toolbar -->
-				<div class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50">
+				<div
+					class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-md bg-gray-50"
+				>
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
@@ -542,7 +655,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('bold')}
+						on:click={() => execCommand("bold")}
 						title="Bold"
 					>
 						<strong>B</strong>
@@ -550,7 +663,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('italic')}
+						on:click={() => execCommand("italic")}
 						title="Italic"
 					>
 						<em>I</em>
@@ -558,7 +671,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('underline')}
+						on:click={() => execCommand("underline")}
 						title="Underline"
 					>
 						<u>U</u>
@@ -567,7 +680,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('insertUnorderedList')}
+						on:click={() => execCommand("insertUnorderedList")}
 						title="Bullet List"
 					>
 						• List
@@ -575,7 +688,7 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('insertOrderedList')}
+						on:click={() => execCommand("insertOrderedList")}
 						title="Numbered List"
 					>
 						1. List
@@ -592,13 +705,13 @@
 					<button
 						type="button"
 						class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100"
-						on:click={() => execCommand('removeFormat')}
+						on:click={() => execCommand("removeFormat")}
 						title="Clear Formatting"
 					>
 						Clear
 					</button>
 				</div>
-				
+
 				<!-- Editor -->
 				<div
 					contenteditable="true"
@@ -609,16 +722,25 @@
 					class="mt-0 min-h-[200px] p-3 border border-gray-300 border-t-0 rounded-b-md shadow-sm focus:ring-red-500 focus:border-red-500 bg-white"
 					placeholder="Start writing your competition description..."
 				></div>
-				
-				<input type="hidden" name="description" bind:value={descriptionContent} />
+
+				<input
+					type="hidden"
+					name="description"
+					bind:value={descriptionContent}
+				/>
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="poster-upload" class="block text-sm font-medium text-gray-700 mb-1">Competition Poster</label>
-				<ImageUpload 
+				<label
+					for="poster-upload"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Competition Poster <span class="text-red-500">*</span
+					></label
+				>
+				<ImageUpload
 					bind:value={posterBase64}
 					id="poster-upload"
-					oldImageUrl={competition?.poster || ''}
+					oldImageUrl={competition?.poster || ""}
 					label="Upload competition poster"
 					accept="image/*"
 					previewSize="max-w-[400px] max-h-[300px]"
@@ -626,26 +748,39 @@
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+				<label
+					for="tags"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Tags</label
+				>
 				<textarea
 					id="tags"
 					name="tags"
 					rows="3"
-					value={competition?.tags ? competition.tags.join(', ') : ''}
+					value={competition?.tags ? competition.tags.join(", ") : ""}
 					placeholder="Enter tags separated by commas (e.g., design, art, competition)"
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 				></textarea>
-				<p class="mt-1 text-sm text-gray-500">Separate multiple tags with commas</p>
+				<p class="mt-1 text-sm text-gray-500">
+					Separate multiple tags with commas
+				</p>
 			</div>
 
 			<div class="md:col-span-2">
-				<label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact (JSON)</label>
+				<label
+					for="contact"
+					class="block text-sm font-medium text-gray-700 mb-1"
+					>Contact (JSON) <span class="text-red-500">*</span></label
+				>
 				<textarea
 					id="contact"
 					name="contact"
 					rows="4"
 					class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
-				>{competition?.contacts ? JSON.stringify(competition.contacts, null, 2) : ''}</textarea>
+					>{competition?.contacts
+						? JSON.stringify(competition.contacts, null, 2)
+						: ""}</textarea
+				>
 			</div>
 		</div>
 
@@ -661,7 +796,11 @@
 				disabled={loading}
 				class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				{loading ? 'Saving...' : (competition ? 'Update Competition' : 'Create Competition')}
+				{loading
+					? "Saving..."
+					: competition
+						? "Update Competition"
+						: "Create Competition"}
 			</button>
 		</div>
 	</form>

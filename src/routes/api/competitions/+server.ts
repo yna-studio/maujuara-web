@@ -8,13 +8,13 @@ import { uploadCompetitionPoster } from '../../../lib/utils/cloudinary';
 // Helper function to remove HTML tags and truncate text
 function generateShortDesc(content: string, maxLength: number = 150): string {
 	if (!content) return '';
-	
+
 	// Remove HTML tags
 	const cleanText = content.replace(/<[^>]*>/g, '').trim();
-	
+
 	// Truncate to maxLength characters
 	if (cleanText.length <= maxLength) return cleanText;
-	
+
 	return cleanText.substring(0, maxLength) + '...';
 }
 
@@ -34,8 +34,8 @@ interface CompetitionData {
 	prize_estimate?: number;
 	desc: string;
 	contacts: Contact[];
-	link_join: string;
-	link_source?: string;
+	link_join?: string;
+	link_source: string;
 	tags?: string[];
 }
 
@@ -222,11 +222,11 @@ export const GET: RequestHandler = async ({ url }) => {
 		const tag = url.searchParams.get('tag');
 		const limitParam = url.searchParams.get('limit');
 		const pageParam = url.searchParams.get('page');
-		
+
 		// Set defaults and validate
 		const limit = limitParam ? parseInt(limitParam, 10) : 9;
 		const page = pageParam ? parseInt(pageParam, 10) : 1;
-		
+
 		// Validate limit and page
 		if (isNaN(limit) || limit < 1 || limit > 100) {
 			return json({
@@ -234,14 +234,14 @@ export const GET: RequestHandler = async ({ url }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		if (isNaN(page) || page < 1) {
 			return json({
 				error: 'Invalid page parameter. Must be a number greater than 0.',
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate status if provided
 		const validStatuses = ['open', 'progress', 'ended'];
 		if (status && !validStatuses.includes(status)) {
@@ -250,7 +250,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate organizer ID if provided
 		if (id_organizer && !ObjectId.isValid(id_organizer)) {
 			return json({
@@ -258,7 +258,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate category ID if provided
 		if (id_category && !ObjectId.isValid(id_category)) {
 			return json({
@@ -303,7 +303,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		});
 	} catch (error) {
 		console.error('Failed to fetch competitions:', error);
-		
+
 		return json({
 			error: 'Failed to fetch competitions from database',
 			message: error instanceof Error ? error.message : 'Unknown error',
@@ -331,18 +331,18 @@ export const POST: RequestHandler = async ({ request }) => {
 			link_source,
 			tags
 		}: CompetitionData = body;
-		
+
 		// Validate required fields
-		const requiredFields = ['title', 'poster', 'deadline_date', 'announcement_date', 'organizer', 'category', 'prize_desc', 'desc', 'contacts', 'link_join'];
+		const requiredFields = ['title', 'poster', 'deadline_date', 'announcement_date', 'organizer', 'category', 'prize_desc', 'desc', 'contacts', 'link_source'];
 		const missingFields = requiredFields.filter(field => !body[field] || (typeof body[field] === 'string' && body[field].trim() === ''));
-		
+
 		if (missingFields.length > 0) {
 			return json({
 				error: `Missing required fields: ${missingFields.join(', ')}`,
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate poster is base64 if it's a new upload
 		if (poster && poster.startsWith('data:image/')) {
 			// It's base64, will be uploaded to Cloudinary
@@ -352,7 +352,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate ObjectId format for organizer
 		if (!ObjectId.isValid(organizer)) {
 			return json({
@@ -360,7 +360,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate ObjectId format for category
 		if (!ObjectId.isValid(category)) {
 			return json({
@@ -368,7 +368,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Validate date formats (ISO-8601)
 		const dateFields = ['deadline_date', 'announcement_date'];
 		for (const field of dateFields) {
@@ -380,7 +380,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				}, { status: 400 });
 			}
 		}
-		
+
 		// Validate contacts array
 		if (!Array.isArray(contacts) || contacts.length === 0) {
 			return json({
@@ -388,7 +388,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		for (const contact of contacts) {
 			if (!contact.type || !contact.value || typeof contact.type !== 'string' || typeof contact.value !== 'string') {
 				return json({
@@ -397,7 +397,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				}, { status: 400 });
 			}
 		}
-		
+
 		// Validate tags array if provided
 		if (tags && !Array.isArray(tags)) {
 			return json({
@@ -405,7 +405,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		if (tags) {
 			for (const tag of tags) {
 				if (typeof tag !== 'string' || tag.trim() === '') {
@@ -416,7 +416,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 			}
 		}
-		
+
 		// Validate prize_estimate
 		const prizeNum = Number(prize_estimate);
 		if (isNaN(prizeNum) || prizeNum < 0) {
@@ -425,21 +425,21 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Get MongoDB connection
 		const uri = getMongoUri();
-		
+
 		const client = new MongoClient(uri, {
 			serverSelectionTimeoutMS: 10000,
 			connectTimeoutMS: 10000
 		} as MongoClientOptions);
-		
+
 		// Connect to database
 		await client.connect();
 		const db = client.db();
 		const competitionsCollection = db.collection('competitions');
 		const organizersCollection = db.collection('organizers');
-		
+
 		// Verify organizer exists
 		const organizerExists = await organizersCollection.findOne({ _id: new ObjectId(organizer) });
 		if (!organizerExists) {
@@ -449,7 +449,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				status: 400
 			}, { status: 400 });
 		}
-		
+
 		// Handle poster upload if it's base64
 		let posterUrl = poster;
 		if (poster.startsWith('data:image/')) {
@@ -465,7 +465,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				}, { status: 500 });
 			}
 		}
-		
+
 		// Create new competition document
 		const currentTime = new Date().toISOString();
 		const newCompetition = {
@@ -485,28 +485,28 @@ export const POST: RequestHandler = async ({ request }) => {
 				type: contact.type.trim(),
 				value: contact.value.trim()
 			})),
-			link_join: link_join.trim(),
-			link_source: link_source ? link_source.trim() : null,
+			link_join: link_join ? link_join.trim() : '',
+			link_source: link_source.trim(),
 			tags: tags ? tags.map(tag => tag.trim()).filter(tag => tag.length > 0) : []
 		};
-		
+
 		// Insert into database
 		const result = await competitionsCollection.insertOne(newCompetition);
-		
+
 		// Handle tags collection - update or insert tags
 		if (tags && tags.length > 0) {
 			const tagsCollection = db.collection('tags');
-			
+
 			for (const tagName of tags) {
 				if (tagName.trim()) {
 					const trimmedTag = tagName.trim().toLowerCase();
-					
+
 					// Try to update existing tag first
 					const updateResult = await tagsCollection.updateOne(
 						{ name: trimmedTag },
 						{ $inc: { total: 1 } }
 					);
-					
+
 					// If tag doesn't exist, insert it with total = 1
 					if (updateResult.matchedCount === 0) {
 						await tagsCollection.insertOne({
@@ -525,16 +525,16 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 			}
 		}
-		
+
 		// Update organizer's updated_at field
 		await organizersCollection.updateOne(
 			{ _id: new ObjectId(organizer) },
 			{ $set: { updated_at: currentTime } }
 		);
-		
+
 		// Close connection
 		await client.close();
-		
+
 		// Send Telegram notification after successful creation
 		try {
 			await TelegramAPI.sendNewCompetitionNotification(result.insertedId.toString(), title);
@@ -543,7 +543,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			console.error('Failed to send Telegram notification:', telegramError);
 			// Don't fail the request if Telegram notification fails
 		}
-		
+
 		// Return the created competition with its ID
 		return json({
 			data: {
@@ -554,10 +554,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			status: 201,
 			message: 'Competition created successfully'
 		}, { status: 201 });
-		
+
 	} catch (error) {
 		console.error('Failed to create competition:', error);
-		
+
 		return json({
 			error: 'Failed to create competition',
 			message: error instanceof Error ? error.message : 'Unknown error',

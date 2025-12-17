@@ -27,17 +27,17 @@ export const GET: RequestHandler = async ({ params }) => {
 
 		// Get MongoDB connection
 		const uri = getMongoUri();
-		
+
 		const client = new MongoClient(uri, {
 			serverSelectionTimeoutMS: 10000,
 			connectTimeoutMS: 10000
 		} as MongoClientOptions);
-		
+
 		// Connect to database
 		await client.connect();
 		const db = client.db();
 		const competitionsCollection = db.collection('competitions');
-		
+
 		// Find competition by ID with aggregation
 		const competition = await competitionsCollection
 			.aggregate([
@@ -67,10 +67,12 @@ export const GET: RequestHandler = async ({ params }) => {
 								then: 'open',
 								else: {
 									$cond: {
-										if: { $and: [
-											{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
-											{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
-										]},
+										if: {
+											$and: [
+												{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
+												{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
+											]
+										},
 										then: 'progress',
 										else: 'ended'
 									}
@@ -113,7 +115,7 @@ export const GET: RequestHandler = async ({ params }) => {
 				}
 			])
 			.next();
-		
+
 		// Check if competition exists
 		if (!competition) {
 			await client.close();
@@ -122,30 +124,30 @@ export const GET: RequestHandler = async ({ params }) => {
 				status: 404
 			}, { status: 404 });
 		}
-		
+
 		// Increment view count
 		await competitionsCollection.updateOne(
 			{ _id: new ObjectId(id) },
 			{ $inc: { views: 1 } }
 		);
-		
+
 		// Close connection
 		await client.close();
-		
+
 		// Convert _id to string
 		const response = {
 			...competition,
 			_id: competition._id.toString()
 		};
-		
+
 		return json({
 			data: response,
 			status: 200
 		});
-		
+
 	} catch (error) {
 		console.error('Failed to fetch competition:', error);
-		
+
 		return json({
 			error: 'Failed to fetch competition from database',
 			message: error instanceof Error ? error.message : 'Unknown error',
@@ -177,18 +179,18 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// Get MongoDB connection
 		const uri = getMongoUri();
-		
+
 		const client = new MongoClient(uri, {
 			serverSelectionTimeoutMS: 10000,
 			connectTimeoutMS: 10000
 		} as MongoClientOptions);
-		
+
 		// Connect to database
 		await client.connect();
 		const db = client.db();
 		const competitionsCollection = db.collection('competitions');
 		const organizersCollection = db.collection('organizers');
-		
+
 		// Check if competition exists
 		const existingCompetition = await competitionsCollection.findOne({ _id: new ObjectId(id) });
 		if (!existingCompetition) {
@@ -209,16 +211,17 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			organizer: body.organizer ? new ObjectId(body.organizer) : existingCompetition.organizer,
 			// Handle tags array
 			tags: body.tags ? (Array.isArray(body.tags) ? body.tags.map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : []) : existingCompetition.tags,
-			// Handle link_source
-			link_source: body.link_source !== undefined ? (body.link_source ? body.link_source.trim() : null) : existingCompetition.link_source
+			// Handle link_source (required) & link_join (optional)
+			link_source: body.link_source !== undefined ? body.link_source.trim() : existingCompetition.link_source,
+			link_join: body.link_join !== undefined ? (body.link_join ? body.link_join.trim() : '') : existingCompetition.link_join
 		};
 
 		// Handle poster upload if it's base64
 		if (body.poster && body.poster.startsWith('data:image/')) {
 			try {
 				const uploadResult = await uploadCompetitionPoster(
-					body.poster, 
-					body.title || existingCompetition.title, 
+					body.poster,
+					body.title || existingCompetition.title,
 					body.deadline_date || existingCompetition.deadline_date
 				);
 				updateData.poster = uploadResult.secure_url;
@@ -249,12 +252,12 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const oldTags = existingCompetition.tags || [];
 		const newTags = updateData.tags || [];
 		const tagsCollection = db.collection('tags');
-		
+
 		// Tags to remove (in old but not in new)
 		const tagsToRemove = oldTags.filter((tag: string) => !newTags.includes(tag));
 		// Tags to add (in new but not in old)
 		const tagsToAdd = newTags.filter((tag: string) => !oldTags.includes(tag));
-		
+
 		// Decrease total for removed tags
 		for (const tagName of tagsToRemove) {
 			const trimmedTag = tagName.trim().toLowerCase();
@@ -263,18 +266,18 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				{ $inc: { total: -1 }, $set: { updated_at: now.toISOString() } }
 			);
 		}
-		
+
 		// Increase total for added tags
 		for (const tagName of tagsToAdd) {
 			if (tagName.trim()) {
 				const trimmedTag = tagName.trim().toLowerCase();
-				
+
 				// Try to update existing tag first
 				const updateResult = await tagsCollection.updateOne(
 					{ name: trimmedTag },
 					{ $inc: { total: 1 }, $set: { updated_at: now.toISOString() } }
 				);
-				
+
 				// If tag doesn't exist, insert it with total = 1
 				if (updateResult.matchedCount === 0) {
 					await tagsCollection.insertOne({
@@ -325,7 +328,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 	} catch (error) {
 		console.error('Failed to update competition:', error);
-		
+
 		return json({
 			error: 'Failed to update competition',
 			message: error instanceof Error ? error.message : 'Unknown error',

@@ -12,7 +12,8 @@
 
     let competitionId = "";
     let title = "";
-    let activeTab: "regulations" | "discussions" = "regulations";
+    let activeTab: "regulations" | "discussions" | "contacts" | "sources" =
+        "regulations";
     let showPosterModal = false;
     let showStatusMenu = false;
     let loading = false;
@@ -119,7 +120,27 @@
         if (competition) {
             title = competition.title;
         }
+
+        // Check hash for active tab
+        const hash = window.location.hash.slice(1);
+        const validTabs = ["regulations", "contacts", "discussions", "sources"];
+        if (validTabs.includes(hash)) {
+            activeTab = hash as
+                | "regulations"
+                | "contacts"
+                | "discussions"
+                | "sources";
+        }
     });
+
+    function changeTab(tab: typeof activeTab) {
+        activeTab = tab;
+        if (browser) {
+            const url = new URL(window.location.href);
+            url.hash = tab;
+            window.history.replaceState({}, "", url);
+        }
+    }
 
     async function copyInstagramCaption() {
         try {
@@ -329,7 +350,7 @@
                                 ? "border-red-600 text-red-600 font-semibold"
                                 : "border-transparent text-gray-600 hover:text-red-600"
                         }`}
-                        on:click={() => (activeTab = "regulations")}
+                        on:click={() => changeTab("regulations")}
                     >
                         Regulasi
                     </button>
@@ -340,7 +361,7 @@
                                 ? "border-red-600 text-red-600 font-semibold"
                                 : "border-transparent text-gray-600 hover:text-red-600"
                         }`}
-                        on:click={() => (activeTab = "contacts")}
+                        on:click={() => changeTab("contacts")}
                     >
                         Kontak
                     </button>
@@ -351,9 +372,20 @@
                                 ? "border-red-600 text-red-600 font-semibold"
                                 : "border-transparent text-gray-600 hover:text-red-600"
                         }`}
-                        on:click={() => (activeTab = "discussions")}
+                        on:click={() => changeTab("discussions")}
                     >
                         Komentar
+                    </button>
+                    <button
+                        type="button"
+                        class={`pb-2 border-b-2 transition-colors duration-150 ${
+                            activeTab === "sources"
+                                ? "border-red-600 text-red-600 font-semibold"
+                                : "border-transparent text-gray-600 hover:text-red-600"
+                        }`}
+                        on:click={() => changeTab("sources")}
+                    >
+                        Sumber
                     </button>
                 </div>
 
@@ -454,7 +486,7 @@
                             Deskripsi Kompetisi
                         </h2>
                         <div
-                            class="prose prose-sm max-w-none competition-description "
+                            class="prose prose-sm max-w-none competition-description"
                         >
                             {@html competition.desc ||
                                 "<p>Tidak ada deskripsi tersedia.</p>"}
@@ -482,7 +514,9 @@
                         <Button
                             text="Ikuti Kompetisi"
                             type="link"
-                            href={competition.link_join || "#"}
+                            href={competition.link_join ||
+                                competition.link_source ||
+                                "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             variant="large"
@@ -531,21 +565,41 @@
                                                     {relatedComp.title}
                                                 </h4>
                                                 {#if relatedComp.prize_estimate}
-                                                    <div class="text-xs text-gray-600 mb-1">
-                                                        Total Hadiah: Rp {relatedComp.prize_estimate.toLocaleString('id-ID')}
+                                                    <div
+                                                        class="text-xs text-gray-600 mb-1"
+                                                    >
+                                                        Total Hadiah: Rp {relatedComp.prize_estimate.toLocaleString(
+                                                            "id-ID",
+                                                        )}
                                                     </div>
                                                 {/if}
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-gray-500">
-                                                        {formatDate(relatedComp.deadline_date)}
+                                                <div
+                                                    class="flex items-center justify-between"
+                                                >
+                                                    <span
+                                                        class="text-xs text-gray-500"
+                                                    >
+                                                        {formatDate(
+                                                            relatedComp.deadline_date,
+                                                        )}
                                                     </span>
-                                                    <span class="text-xs px-2 py-1 rounded-full 
-                                                        {relatedComp.status === 'open' ? 'bg-green-100 text-green-800' : 
-                                                         relatedComp.status === 'progress' ? 'bg-yellow-100 text-yellow-800' : 
-                                                         'bg-red-100 text-red-800'}">
-                                                        {relatedComp.status === 'open' ? 'Open' : 
-                                                         relatedComp.status === 'progress' ? 'Berlangsung' : 
-                                                         'Berakhir'}
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-full
+                                                        {relatedComp.status ===
+                                                        'open'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : relatedComp.status ===
+                                                                'progress'
+                                                              ? 'bg-yellow-100 text-yellow-800'
+                                                              : 'bg-red-100 text-red-800'}"
+                                                    >
+                                                        {relatedComp.status ===
+                                                        "open"
+                                                            ? "Open"
+                                                            : relatedComp.status ===
+                                                                "progress"
+                                                              ? "Berlangsung"
+                                                              : "Berakhir"}
                                                     </span>
                                                 </div>
                                             </div>
@@ -557,45 +611,94 @@
                     {/if}
                 {:else if activeTab === "contacts"}
                     <!-- Contacts Tab -->
-                    <section class="bg-white rounded-xl shadow p-5 text-sm text-gray-700">
-                        
+                    <section
+                        class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
+                    >
                         {#if competition.contacts && competition.contacts.length > 0}
                             <div class="space-y-3">
                                 {#each competition.contacts as contact}
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                                                {#if contact.type === 'email'}
-                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                    <div
+                                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                    >
+                                        <div
+                                            class="flex items-center space-x-3"
+                                        >
+                                            <div
+                                                class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center"
+                                            >
+                                                {#if contact.type === "email"}
+                                                    <svg
+                                                        class="w-4 h-4 text-red-600"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+                                                        />
+                                                        <path
+                                                            d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+                                                        />
                                                     </svg>
-                                                {:else if contact.type === 'phone' || contact.type === 'whatsapp'}
-                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                {:else if contact.type === "phone" || contact.type === "whatsapp"}
+                                                    <svg
+                                                        class="w-4 h-4 text-red-600"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"
+                                                        />
                                                     </svg>
-                                                {:else if contact.type === 'instagram'}
-                                                    <svg class="w-4 h-4 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.058 1.645-.07 4.849-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+                                                {:else if contact.type === "instagram"}
+                                                    <svg
+                                                        class="w-4 h-4 text-pink-600"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.058 1.645-.07 4.849-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"
+                                                        />
                                                     </svg>
-                                                {:else if contact.type === 'website'}
-                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zM9.954 4.569c-.768.926-1.298 2.46-1.404 4.431h2.89c-.106-1.97-.636-3.505-1.404-4.43a2.996 2.996 0 00-.082 0zM14.083 9h-1.946c-.089 1.546-.383 2.97-.837 4.118A6.004 6.004 0 0014.083 9zM9.954 15.431c.768-.926 1.298-2.46 1.404-4.431h-2.89c.106 1.97.636 3.505 1.404 4.43a2.996 2.996 0 00.082 0z" clip-rule="evenodd"/>
+                                                {:else if contact.type === "website"}
+                                                    <svg
+                                                        class="w-4 h-4 text-red-600"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zM9.954 4.569c-.768.926-1.298 2.46-1.404 4.431h2.89c-.106-1.97-.636-3.505-1.404-4.43a2.996 2.996 0 00-.082 0zM14.083 9h-1.946c-.089 1.546-.383 2.97-.837 4.118A6.004 6.004 0 0014.083 9zM9.954 15.431c.768-.926 1.298-2.46 1.404-4.431h-2.89c.106 1.97.636 3.505 1.404 4.43a2.996 2.996 0 00.082 0z"
+                                                            clip-rule="evenodd"
+                                                        />
                                                     </svg>
                                                 {:else}
-                                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                                    <svg
+                                                        class="w-4 h-4 text-red-600"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                            clip-rule="evenodd"
+                                                        />
                                                     </svg>
                                                 {/if}
                                             </div>
                                             <div>
-                                                <p class="font-medium text-gray-900 capitalize">{contact.type}</p>
-                                                <p class="text-gray-600">{contact.value}</p>
+                                                <p
+                                                    class="font-medium text-gray-900 capitalize"
+                                                >
+                                                    {contact.type}
+                                                </p>
+                                                <p class="text-gray-600">
+                                                    {contact.value}
+                                                </p>
                                             </div>
                                         </div>
                                         <div class="flex space-x-2">
-                                            {#if contact.type === 'email'}
-                                                <a 
+                                            {#if contact.type === "email"}
+                                                <a
                                                     href="mailto:{contact.value}"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -603,34 +706,44 @@
                                                 >
                                                     Email
                                                 </a>
-                                            {:else if contact.type === 'phone'}
-                                                <a 
+                                            {:else if contact.type === "phone"}
+                                                <a
                                                     href="tel:{contact.value}"
                                                     class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                                                 >
                                                     Call
                                                 </a>
-                                            {:else if contact.type === 'whatsapp'}
-                                                <a 
-                                                    href="https://wa.me/{contact.value.replace(/[^0-9]/g, '')}"
+                                            {:else if contact.type === "whatsapp"}
+                                                <a
+                                                    href="https://wa.me/{contact.value.replace(
+                                                        /[^0-9]/g,
+                                                        '',
+                                                    )}"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
                                                 >
                                                     WhatsApp
                                                 </a>
-                                            {:else if contact.type === 'instagram'}
-                                                <a 
-                                                    href="https://instagram.com/{contact.value.replace('@', '')}"
+                                            {:else if contact.type === "instagram"}
+                                                <a
+                                                    href="https://instagram.com/{contact.value.replace(
+                                                        '@',
+                                                        '',
+                                                    )}"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     class="px-3 py-1 bg-pink-600 text-white text-xs rounded hover:bg-pink-700 transition-colors"
                                                 >
                                                     Instagram
                                                 </a>
-                                            {:else if contact.type === 'website'}
-                                                <a 
-                                                    href="{contact.value.startsWith('http') ? contact.value : `https://${contact.value}`}"
+                                            {:else if contact.type === "website"}
+                                                <a
+                                                    href={contact.value.startsWith(
+                                                        "http",
+                                                    )
+                                                        ? contact.value
+                                                        : `https://${contact.value}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
@@ -644,17 +757,29 @@
                             </div>
                         {:else}
                             <div class="text-center py-8">
-                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                <div
+                                    class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3"
+                                >
+                                    <svg
+                                        class="w-6 h-6 text-gray-400"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+                                        />
+                                        <path
+                                            d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+                                        />
                                     </svg>
                                 </div>
-                                <p class="text-gray-500">Belum ada informasi kontak tersedia</p>
+                                <p class="text-gray-500">
+                                    Belum ada informasi kontak tersedia
+                                </p>
                             </div>
                         {/if}
                     </section>
-                {:else}
+                {:else if activeTab === "discussions"}
                     <!-- Discussions Tab with Facebook Comments -->
                     <section
                         class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
@@ -685,20 +810,63 @@
                             atau periksa koneksi internet Anda.
                         </p>
                     </section>
+                {:else if activeTab === "sources"}
+                    <!-- Sources Tab -->
+                    <section
+                        class="bg-white rounded-xl shadow p-5 text-sm text-gray-700"
+                    >
+                        <h3 class="text-sm font-semibold mb-4">
+                            Sumber Informasi
+                        </h3>
+
+                        {#if competition.link_source}
+                            <div class="flex flex-col space-y-2">
+                                <a
+                                    href={competition.link_source}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-red-600 hover:text-red-700 hover:underline break-all"
+                                >
+                                    {competition.link_source}
+                                </a>
+                            </div>
+                        {:else}
+                            <div class="text-center py-8">
+                                <div
+                                    class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3"
+                                >
+                                    <svg
+                                        class="w-6 h-6 text-gray-400"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                                <p class="text-gray-500">
+                                    Tidak ada informasi sumber tersedia
+                                </p>
+                            </div>
+                        {/if}
+                    </section>
                 {/if}
             </div>
         </div>
         <!-- </div> -->
         <!-- </div> -->
-        
-       
-        
+
         <!-- Mobile Sticky Action Button -->
-        <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30">
+        <div
+            class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30"
+        >
             <Button
                 text="Ikuti Kompetisi"
                 type="link"
-                href={competition.link_join || "#"}
+                href={competition.link_join || competition.link_source || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="large"
@@ -842,7 +1010,6 @@
         overflow-wrap: break-word;
     }
 
-   
     /* Contact links wrapping */
     .contact-link {
         word-wrap: break-word;
