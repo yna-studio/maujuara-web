@@ -24,7 +24,25 @@
 		});
 	};
 
-	const currentStatus = status || competition.status || "open";
+	// Make status reactive - explicitly depend on competition properties
+	$: currentStatus = (() => {
+		const now = new Date();
+		const deadlineDate = new Date(competition.deadline_date);
+		const announcementDate = new Date(competition.announcement_date);
+
+		// If current date is on or past announcement date, competition has ended
+		if (now >= announcementDate) {
+			return "ended";
+		}
+
+		// If current date is on or past deadline but before announcement, competition is in progress
+		if (now >= deadlineDate) {
+			return "progress";
+		}
+
+		// If current date is before deadline, competition is open
+		return "open";
+	})();
 </script>
 
 <a
