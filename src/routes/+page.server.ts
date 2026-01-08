@@ -4,13 +4,13 @@ import { OrganizersAPI } from '$lib/api/organizers';
 import { StatsAPI } from '$lib/api/stats';
 import { TagsAPI } from '$lib/api/tags';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ fetch }) => {
     try {
         const [competitionsResponse, organizersResponse, statsResponse, tagsResponse] = await Promise.all([
-            CompetitionsAPI.getCompetitions({ limit: 9 }),
-            OrganizersAPI.getOrganizersWithLimit(10, 'updated_at'),
-            StatsAPI.getStats(),
-            TagsAPI.getTags({ limit: 12 }) // Get top 12 tags
+            CompetitionsAPI.getCompetitions({ limit: 9 }, fetch),
+            OrganizersAPI.getOrganizersWithLimit(10, 'updated_at', fetch),
+            StatsAPI.getStats(fetch),
+            TagsAPI.getTags({ limit: 12 }, fetch) // Get top 12 tags
         ]);
 
         return {

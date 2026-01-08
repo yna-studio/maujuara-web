@@ -29,13 +29,13 @@ export interface GetTagsParams {
 class TagsAPIClass {
     private api = apiCaller;
 
-    async getTags(params: GetTagsParams = {}): Promise<TagsResponse> {
+    async getTags(params: GetTagsParams = {}, customFetch?: typeof fetch): Promise<TagsResponse> {
         const { limit = 20, page = 1 } = params;
-        
+
         return this.api.get<TagsResponse>('/tags', {
             limit,
             page
-        });
+        }, customFetch);
     }
 }
 

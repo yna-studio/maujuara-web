@@ -19,8 +19,8 @@ interface StatsResponse {
 
 export class StatsAPI {
     // Get all statistics
-    static async getStats(): Promise<StatsResponse> {
-        return apiCaller.get<StatsResponse>('/stats');
+    static async getStats(customFetch?: typeof fetch): Promise<StatsResponse> {
+        return apiCaller.get<StatsResponse>('/stats', undefined, customFetch);
     }
 }
 

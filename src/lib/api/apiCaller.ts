@@ -47,8 +47,15 @@ class ApiCaller {
     }
 
     // GET request
-    async get<T>(url: string, params?: Record<string, any>): Promise<T> {
+    async get<T>(url: string, params?: Record<string, any>, customFetch?: typeof fetch): Promise<T> {
         try {
+            if (customFetch) {
+                const searchParams = params ? new URLSearchParams(params).toString() : '';
+                const fullUrl = searchParams ? `${url}?${searchParams}` : url;
+                const response = await customFetch(`${this.instance.defaults.baseURL}${fullUrl}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
             const response = await this.instance.get(url, { params });
             return response.data;
         } catch (error) {
@@ -58,8 +65,17 @@ class ApiCaller {
     }
 
     // POST request
-    async post<T>(url: string, data?: any): Promise<T> {
+    async post<T>(url: string, data?: any, customFetch?: typeof fetch): Promise<T> {
         try {
+            if (customFetch) {
+                const response = await customFetch(`${this.instance.defaults.baseURL}${url}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
             const response = await this.instance.post(url, data);
             return response.data;
         } catch (error) {
@@ -69,8 +85,17 @@ class ApiCaller {
     }
 
     // PUT request
-    async put<T>(url: string, data?: any): Promise<T> {
+    async put<T>(url: string, data?: any, customFetch?: typeof fetch): Promise<T> {
         try {
+            if (customFetch) {
+                const response = await customFetch(`${this.instance.defaults.baseURL}${url}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
             const response = await this.instance.put(url, data);
             return response.data;
         } catch (error) {
@@ -80,8 +105,15 @@ class ApiCaller {
     }
 
     // DELETE request
-    async delete<T>(url: string): Promise<T> {
+    async delete<T>(url: string, customFetch?: typeof fetch): Promise<T> {
         try {
+            if (customFetch) {
+                const response = await customFetch(`${this.instance.defaults.baseURL}${url}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
             const response = await this.instance.delete(url);
             return response.data;
         } catch (error) {
@@ -91,8 +123,17 @@ class ApiCaller {
     }
 
     // PATCH request
-    async patch<T>(url: string, data?: any): Promise<T> {
+    async patch<T>(url: string, data?: any, customFetch?: typeof fetch): Promise<T> {
         try {
+            if (customFetch) {
+                const response = await customFetch(`${this.instance.defaults.baseURL}${url}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
             const response = await this.instance.patch(url, data);
             return response.data;
         } catch (error) {

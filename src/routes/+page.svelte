@@ -4,7 +4,7 @@
 	import Button from "$lib/components/Button.svelte";
 	import OrganizerList from "$lib/components/OrganizerList.svelte";
 	import Spinner from "$lib/components/Spinner.svelte";
-	import type { Organizer } from "$lib/routes/api/organizers/$types";
+	import type { Organizer } from "$lib/api/organizers";
 	import type { PageData } from "./$types";
 	import { formatCurrency } from "$lib/utils/currency";
 
