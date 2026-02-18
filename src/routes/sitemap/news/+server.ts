@@ -1,41 +1,21 @@
 import type { RequestHandler } from './$types';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 export const GET: RequestHandler = async ({ url }) => {
-	let client;
 	try {
 		// Get base URL from request
 		const baseUrl = url.origin;
-		const uri = getMongoUri();
-		
-		// Create MongoDB client
-		client = new MongoClient(uri, {
-			maxPoolSize: 10,
-			serverSelectionTimeoutMS: 5000,
-			socketTimeoutMS: 45000,
-		});
-
-		// Connect to database
-		await client.connect();
-		const db = client.db('maujuara');
-		const newsCollection = db.collection('news');
 
 		// Fetch all news, no limit for SEO
-		const news = await newsCollection
-			.find(
-				{},
-				{
-					projection: {
-						_id: 1,
-						title: 1,
-						created_at: 1,
-						updated_at: 1
-					}
-				}
-			)
-			.sort({ updated_at: -1 })
-			.toArray();
+		const news = await DatabaseService.find('news', {}, {
+			projection: {
+				_id: 1,
+				title: 1,
+				created_at: 1,
+				updated_at: 1
+			},
+			sort: { updated_at: -1 }
+		});
 
 		// Generate sitemap URLs
 		const sitemapUrls = news.map((item: any) => {
@@ -71,10 +51,5 @@ export const GET: RequestHandler = async ({ url }) => {
 	} catch (error) {
 		console.error('Error generating news sitemap:', error);
 		return new Response('Error generating sitemap', { status: 500 });
-	} finally {
-		// Close MongoDB connection
-		if (client) {
-			client.close();
-		}
 	}
 };

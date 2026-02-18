@@ -1,4 +1,4 @@
-import { type Db, Collection, ObjectId, type Sort, type Filter, type Document } from 'mongodb';
+import { type Db, Collection, ObjectId, type Sort, type Filter, type Document, type OptionalUnlessRequiredId } from 'mongodb';
 import { withDatabase } from './mongodb';
 
 /**
@@ -29,14 +29,22 @@ export class DatabaseService {
   ): Promise<T[]> {
     return withDatabase(async (db: Db) => {
       const collection = db.collection<T>(collectionName);
-      let cursor = collection.find(filter);
+      let query = collection.find(filter);
       
-      if (options.projection) cursor = cursor.project(options.projection);
-      if (options.sort) cursor = cursor.sort(options.sort);
-      if (options.skip) cursor = cursor.skip(options.skip);
-      if (options.limit) cursor = cursor.limit(options.limit);
+      if (options.projection) {
+        query = query.project(options.projection);
+      }
+      if (options.sort) {
+        query = query.sort(options.sort);
+      }
+      if (options.skip) {
+        query = query.skip(options.skip);
+      }
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
       
-      return await cursor.toArray();
+      return query.toArray();
     });
   }
 
@@ -61,7 +69,7 @@ export class DatabaseService {
    */
   static async insertOne<T extends Document = Document>(
     collectionName: string,
-    document: T
+    document: OptionalUnlessRequiredId<T>
   ): Promise<{ insertedId: ObjectId }> {
     return withDatabase(async (db: Db) => {
       const collection = db.collection<T>(collectionName);
@@ -75,7 +83,7 @@ export class DatabaseService {
    */
   static async insertMany<T extends Document = Document>(
     collectionName: string,
-    documents: T[]
+    documents: OptionalUnlessRequiredId<T>[]
   ): Promise<{ insertedIds: ObjectId[] }> {
     return withDatabase(async (db: Db) => {
       const collection = db.collection<T>(collectionName);

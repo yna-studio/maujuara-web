@@ -4,6 +4,36 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()] as any,
+	
+	// Build optimizations
+	build: {
+		// Enable source maps for debugging but minimize bundle size
+		sourcemap: true,
+		// Minify CSS and JS
+		minify: 'esbuild',
+		// Target modern browsers for better optimization
+		target: 'esnext',
+		// Enable CSS code splitting
+		cssCodeSplit: true
+	},
+	
+	// Development optimizations
+	server: {
+		port: 20251,
+		// Enable HMR for faster development
+		hmr: {
+			overlay: false
+		}
+	},
+	
+	// Resolve optimizations
+	resolve: {
+		// Enable faster module resolution
+		alias: {
+			$lib: './src/lib'
+		}
+	},
+	
 	// Configuration for the Preview Server (npm run preview)
 	preview: {
 		// 1. Host
@@ -18,8 +48,5 @@ export default defineConfig({
 		// allowedHosts: ['my-project.local', '192.168.1.10'] 
 		allowedHosts: true,
 	},
-	server: {
-		port: 20251
-	}
 });
 

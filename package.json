@@ -10,12 +10,18 @@
 		"dev": "vite dev",
 		"preview": "vite preview --port 20251",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"build:analyze": "vite build --mode analyze && npx vite-bundle-analyzer .svelte-kit/build",
+		"build:production": "NODE_ENV=production vite build",
+		"dev:fast": "vite dev --force",
+		"optimize": "npm run build:production && npm run analyze:size",
+		"analyze:size": "du -sh .svelte-kit/build | sort -hr",
+		"clean": "rm -rf .svelte-kit/build && rm -rf node_modules/.vite"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/kit": "^2.0.0",
-		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
 		"@tailwindcss/vite": "^4.1.17",
 		"@types/bcryptjs": "^3.0.0",
 		"@types/node": "^24.10.2",
