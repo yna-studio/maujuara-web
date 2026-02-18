@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 
 // Helper function to remove HTML tags and truncate text
 function generateShortDesc(content: string, maxLength: number = 150): string {
@@ -34,20 +34,7 @@ interface GetNewsParams {
 async function getNews(params: GetNewsParams) {
 	const { search, limit, page } = params;
 
-	// Get MongoDB connection
-	const uri = getMongoUri();
-
-	const client = new MongoClient(uri, {
-		serverSelectionTimeoutMS: 10000,
-		connectTimeoutMS: 10000
-	} as MongoClientOptions);
-
 	try {
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const newsCollection = db.collection('news');
-
 		// Build query
 		const query: Record<string, any> = {};
 
@@ -60,53 +47,51 @@ async function getNews(params: GetNewsParams) {
 		const skip = (page - 1) * limit;
 
 		// Execute query with pagination and user lookup
-		const news = await newsCollection
-			.aggregate([
-				{ $match: query },
-				{
-					$lookup: {
-						from: 'users',
-						localField: 'created_by',
-						foreignField: '_id',
-						as: 'userInfo'
-					}
-				},
-				{ $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
-				{
-					$addFields: {
-						createdBy: {
-							$cond: {
-								if: { $ne: ['$userInfo', null] },
-								then: {
-									id: { $toString: '$userInfo._id' },
-									name: '$userInfo.name',
-									avatar: '$userInfo.avatar'
-								},
-								else: null
-							}
-						},
-						// Ensure tags field exists
-						tags: { $ifNull: ['$tags', []] }
-					}
-				},
-				{
-					$project: {
-						_id: 1,
-						title: 1,
-						thumbnail: 1,
-						content: 1,
-						tags: 1,
-						created_at: 1,
-						updated_at: 1,
-						createdBy: 1,
-						created_by: 1
-					}
-				},
-				{ $sort: { created_at: -1 } },
-				{ $skip: skip },
-				{ $limit: limit }
-			])
-			.toArray();
+		const news = await DatabaseService.aggregate('news', [
+			{ $match: query },
+			{
+				$lookup: {
+					from: 'users',
+					localField: 'created_by',
+					foreignField: '_id',
+					as: 'userInfo'
+				}
+			},
+			{ $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+			{
+				$addFields: {
+					createdBy: {
+						$cond: {
+							if: { $ne: ['$userInfo', null] },
+							then: {
+								id: { $toString: '$userInfo._id' },
+								name: '$userInfo.name',
+								avatar: '$userInfo.avatar'
+							},
+							else: null
+						}
+					},
+					// Ensure tags field exists
+					tags: { $ifNull: ['$tags', []] }
+				}
+			},
+			{
+				$project: {
+					_id: 1,
+					title: 1,
+					thumbnail: 1,
+					content: 1,
+					tags: 1,
+					created_at: 1,
+					updated_at: 1,
+					createdBy: 1,
+					created_by: 1
+				}
+			},
+			{ $sort: { created_at: -1 } },
+			{ $skip: skip },
+			{ $limit: limit }
+		]);
 
 		// Debug: Log the first item to see what fields are available
 		if (news.length > 0) {
@@ -115,7 +100,7 @@ async function getNews(params: GetNewsParams) {
 		}
 
 		// Get total count for pagination info
-		const totalCount = await newsCollection.countDocuments(query);
+		const totalCount = await DatabaseService.count('news', query);
 
 		// Calculate pagination info
 		const totalPages = Math.ceil(totalCount / limit);
@@ -127,8 +112,9 @@ async function getNews(params: GetNewsParams) {
 			totalPages,
 			totalCount
 		};
-	} finally {
-		await client.close();
+	} catch (error) {
+		console.error('Failed to fetch news:', error);
+		throw error;
 	}
 }
 
@@ -254,24 +240,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		}
 		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const newsCollection = db.collection('news');
-		const usersCollection = db.collection('users');
-		
 		// Verify user exists
-		const userExists = await usersCollection.findOne({ _id: new ObjectId(created_by) });
+		const userExists = await DatabaseService.findOne('users', { _id: new ObjectId(created_by) });
 		if (!userExists) {
-			await client.close();
 			return json({
 				error: 'User not found',
 				status: 400
@@ -292,10 +263,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 		
 		// Insert into database
-		const result = await newsCollection.insertOne(newNews);
-		
-		// Close connection
-		await client.close();
+		const result = await DatabaseService.insertOne('news', newNews);
 		
 		// Return the created news with its ID
 		return json({

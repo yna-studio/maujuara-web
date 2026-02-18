@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 
 // Helper function to remove HTML tags and truncate text
 function generateShortDesc(content: string, maxLength: number = 150): string {
@@ -36,64 +36,49 @@ export const GET: RequestHandler = async ({ params }) => {
 			}, { status: 400 });
 		}
 
-		// Connect to database
-		const uri = getMongoUri();
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-
-		await client.connect();
-		const db = client.db();
-		const newsCollection = db.collection('news');
-
 		// Find news by ID with user lookup
-		const newsItem = await newsCollection
-			.aggregate([
-				{ $match: { _id: new ObjectId(id) } },
-				{
-					$lookup: {
-						from: 'users',
-						localField: 'created_by',
-						foreignField: '_id',
-						as: 'userInfo'
-					}
-				},
-				{ $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
-				{
-					$addFields: {
-						createdBy: {
-							$cond: {
-								if: { $ne: ['$userInfo', null] },
-								then: {
-									id: { $toString: '$userInfo._id' },
-									name: '$userInfo.name',
-									avatar: '$userInfo.avatar'
-								},
-								else: null
-							}
-						},
-						// Ensure tags field exists
-						tags: { $ifNull: ['$tags', []] }
-					}
-				},
-				{
-					$project: {
-						_id: 1,
-						title: 1,
-						thumbnail: 1,
-						content: 1,
-						tags: 1,
-						created_at: 1,
-						updated_at: 1,
-						createdBy: 1,
-						created_by: 1
-					}
+		const newsItem = await DatabaseService.aggregate('news', [
+			{ $match: { _id: new ObjectId(id) } },
+			{
+				$lookup: {
+					from: 'users',
+					localField: 'created_by',
+					foreignField: '_id',
+					as: 'userInfo'
 				}
-			])
-			.toArray();
-
-		await client.close();
+			},
+			{ $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+			{
+				$addFields: {
+					createdBy: {
+						$cond: {
+							if: { $ne: ['$userInfo', null] },
+							then: {
+								id: { $toString: '$userInfo._id' },
+								name: '$userInfo.name',
+								avatar: '$userInfo.avatar'
+							},
+							else: null
+						}
+					},
+					// Ensure tags field exists
+					tags: { $ifNull: ['$tags', []] }
+				}
+			},
+			{
+				$project: {
+					_id: 1,
+					title: 1,
+					thumbnail: 1,
+					content: 1,
+					tags: 1,
+					created_at: 1,
+					updated_at: 1,
+					createdBy: 1,
+					created_by: 1
+				}
+			}
+		]);
 
 		// Check if news item exists
 		if (newsItem.length === 0) {

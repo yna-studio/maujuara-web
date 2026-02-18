@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -31,22 +30,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			);
 		}
 
-		const uri = getMongoUri();
-
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-
-		await client.connect();
-		const db = client.db();
-		const usersCollection = db.collection('users');
-
 		// Find user by email
-		const user = await usersCollection.findOne({ email: email.trim() });
+		const user = await DatabaseService.findOne('users', { email: email.trim() });
 
 		if (!user) {
-			await client.close();
 			return json(
 				{
 					error: 'Invalid email or password',
@@ -60,7 +47,6 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		const passwordMatch = await bcrypt.compare(password.trim(), user.password);
 
 		if (!passwordMatch) {
-			await client.close();
 			return json(
 				{
 					error: 'Invalid email or password',
@@ -74,7 +60,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		const token = crypto.randomBytes(32).toString('hex');
 
 		// Update user document with token
-		await usersCollection.updateOne(
+		await DatabaseService.updateOne(
+			'users',
 			{ _id: user._id },
 			{
 				$set: {
@@ -91,8 +78,6 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'lax'
 		});
-
-		await client.close();
 
 		return json(
 			{

@@ -1,7 +1,6 @@
 import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
 	const token = cookies.get('session_token');
@@ -12,18 +11,8 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 	}
 
 	// Validate token against database before deciding to redirect
-	const uri = getMongoUri();
-	const client = new MongoClient(uri, {
-		serverSelectionTimeoutMS: 10000,
-		connectTimeoutMS: 10000
-	} as MongoClientOptions);
-
 	try {
-		await client.connect();
-		const db = client.db();
-		const usersCollection = db.collection('users');
-
-		const user = await usersCollection.findOne({ token });
+		const user = await DatabaseService.findOne('users', { token });
 
 		if (!user) {
 			// Invalid or stale token: clear cookie and stay on /super without redirect
@@ -48,7 +37,5 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 	} catch (error) {
 		// Handle redirect or other errors
 		throw error;
-	} finally {
-		await client.close();
 	}
 };

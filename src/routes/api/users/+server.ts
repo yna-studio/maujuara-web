@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 import bcrypt from 'bcryptjs';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -64,19 +63,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			);
 		}
 
-		// Get MongoDB connection
-		const uri = getMongoUri();
-
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const usersCollection = db.collection('users');
-
 		// Timestamps
 		const currentTime = new Date().toISOString();
 
@@ -96,10 +82,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 
 		// Insert into database
-		const result = await usersCollection.insertOne(newUser);
-
-		// Close connection
-		await client.close();
+		const result = await DatabaseService.insertOne('users', newUser);
 
 		// Return created user (excluding password in response)
 		const { password: _password, ...safeUser } = newUser;

@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 interface GetTagsParams {
 	limit: number;
@@ -11,33 +10,19 @@ interface GetTagsParams {
 async function getTags(params: GetTagsParams) {
 	const { limit, page } = params;
 
-	// Get MongoDB connection
-	const uri = getMongoUri();
-
-	const client = new MongoClient(uri, {
-		serverSelectionTimeoutMS: 10000,
-		connectTimeoutMS: 10000
-	} as MongoClientOptions);
-
 	try {
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const tagsCollection = db.collection('tags');
-
 		// Calculate skip for pagination
 		const skip = (page - 1) * limit;
 
 		// Execute query with pagination and sorting by total (descending)
-		const tags = await tagsCollection
-			.find({ total: { $gt: 0 } }) // Only include tags with total > 0
-			.sort({ total: -1 }) // Order by total biggest first
-			.skip(skip)
-			.limit(limit)
-			.toArray();
+		const tags = await DatabaseService.find('tags', { total: { $gt: 0 } }, {
+			sort: { total: -1 }, // Order by total biggest first
+			skip,
+			limit
+		});
 
 		// Get total count for pagination info
-		const totalCount = await tagsCollection.countDocuments({ total: { $gt: 0 } });
+		const totalCount = await DatabaseService.count('tags', { total: { $gt: 0 } });
 
 		// Calculate pagination info
 		const totalPages = Math.ceil(totalCount / limit);
@@ -49,8 +34,9 @@ async function getTags(params: GetTagsParams) {
 			totalPages,
 			totalCount
 		};
-	} finally {
-		await client.close();
+	} catch (error) {
+		console.error('Failed to fetch tags:', error);
+		throw error;
 	}
 }
 

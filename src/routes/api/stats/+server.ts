@@ -1,25 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 export const GET: RequestHandler = async () => {
 	try {
-		// Get MongoDB connection
-		const uri = getMongoUri();
-
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-
-		const competitionsCollection = db.collection('competitions');
-		const organizersCollection = db.collection('organizers');
-
 		// Get current date for filtering
 		const now = new Date();
 		const currentYear = now.getFullYear();
@@ -34,25 +18,25 @@ export const GET: RequestHandler = async () => {
 			competitionsThisYear
 		] = await Promise.all([
 			// Total competitions
-			competitionsCollection.countDocuments(),
+			DatabaseService.count('competitions'),
 
 			// Active competitions (now <= announcement_date)
-			competitionsCollection.countDocuments({
+			DatabaseService.count('competitions', {
 				announcement_date: { $gte: now.toISOString() }
 			}),
 
 			// Total organizers
-			organizersCollection.countDocuments(),
+			DatabaseService.count('organizers'),
 
 			// Competitions this year
-			competitionsCollection.countDocuments({
+			DatabaseService.count('competitions', {
 				deadline_date: { $gte: startOfYear.toISOString() },
 				announcement_date: { $lte: endOfYear.toISOString() }
 			})
 		]);
 
 		// Calculate total prize this year
-		const prizeAggregation = await competitionsCollection.aggregate([
+		const prizeAggregation = await DatabaseService.aggregate('competitions', [
 			{
 				$match: {
 					deadline_date: { $gte: startOfYear.toISOString() },
@@ -66,12 +50,9 @@ export const GET: RequestHandler = async () => {
 					totalPrize: { $sum: '$prize_estimate' }
 				}
 			}
-		]).toArray();
+		]);
 
 		const prizeThisYear = prizeAggregation.length > 0 ? prizeAggregation[0].totalPrize : 0;
-
-		// Close connection
-		await client.close();
 
 		// Return stats
 		return json({

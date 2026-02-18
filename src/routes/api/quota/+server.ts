@@ -2,8 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { v2 as cloudinary } from 'cloudinary';
 import { env } from '$env/dynamic/private';
-import { getMongoUri } from '../../../configs/mongodb';
-import { MongoClient } from 'mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { withDatabase } from '$lib/server/mongodb';
 import axios from 'axios';
 
 // Configure Cloudinary (same as cloudinary.ts)
@@ -87,7 +87,6 @@ async function checkCloudinaryQuota(): Promise<QuotaInfo> {
  * Check MongoDB connection and database status
  */
 async function checkMongoDBQuota(): Promise<QuotaInfo> {
-	let client: MongoClient | null = null;
 	try {
 		if (!env.MONGODB_HOST || !env.MONGODB_USER || !env.MONGODB_PASSWORD) {
 			return {
@@ -97,41 +96,34 @@ async function checkMongoDBQuota(): Promise<QuotaInfo> {
 			};
 		}
 
-		const uri = getMongoUri();
-		client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 5000,
-			connectTimeoutMS: 5000
-		});
-
-		await client.connect();
-		const db = client.db();
-		
-		// Get database stats
-		const stats = await db.stats();
-		
-		// Get collection counts
-		const collections = await db.listCollections().toArray();
-		const collectionCounts: Record<string, number> = {};
-		
-		for (const collection of collections) {
-			const count = await db.collection(collection.name).countDocuments();
-			collectionCounts[collection.name] = count;
-		}
-
-		return {
-			service: 'MongoDB',
-			status: 'ok',
-			message: 'MongoDB is accessible',
-			details: {
-				database: db.databaseName,
-				collections: collections.length,
-				collection_counts: collectionCounts,
-				data_size: stats.dataSize,
-				storage_size: stats.storageSize,
-				indexes: stats.indexes,
-				index_size: stats.indexSize
+		return await withDatabase(async (db) => {
+			// Get database stats
+			const stats = await db.stats();
+			
+			// Get collection counts
+			const collections = await db.listCollections().toArray();
+			const collectionCounts: Record<string, number> = {};
+			
+			for (const collection of collections) {
+				const count = await db.collection(collection.name).countDocuments();
+				collectionCounts[collection.name] = count;
 			}
-		};
+
+			return {
+				service: 'MongoDB',
+				status: 'ok',
+				message: 'MongoDB is accessible',
+				details: {
+					database: db.databaseName,
+					collections: collections.length,
+					collection_counts: collectionCounts,
+					data_size: stats.dataSize,
+					storage_size: stats.storageSize,
+					indexes: stats.indexes,
+					index_size: stats.indexSize
+				}
+			};
+		});
 	} catch (error) {
 		return {
 			service: 'MongoDB',
@@ -141,10 +133,6 @@ async function checkMongoDBQuota(): Promise<QuotaInfo> {
 				error: error instanceof Error ? error.stack : String(error)
 			}
 		};
-	} finally {
-		if (client) {
-			await client.close();
-		}
 	}
 }
 

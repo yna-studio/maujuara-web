@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 
 export const DELETE: RequestHandler = async ({ params }) => {
 	try {
@@ -15,26 +15,12 @@ export const DELETE: RequestHandler = async ({ params }) => {
 			}, { status: 400 });
 		}
 		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const categoriesCollection = db.collection('categories');
-		
 		// Convert string ID to ObjectId
 		let objectId;
 		
 		try {
 			objectId = new ObjectId(categoryId);
 		} catch {
-			await client.close();
 			return json({
 				error: 'Invalid category ID format',
 				status: 400
@@ -42,10 +28,9 @@ export const DELETE: RequestHandler = async ({ params }) => {
 		}
 		
 		// Check if category exists
-		const existingCategory = await categoriesCollection.findOne({ _id: objectId });
+		const existingCategory = await DatabaseService.findOne('categories', { _id: objectId });
 		
 		if (!existingCategory) {
-			await client.close();
 			return json({
 				error: 'Category not found',
 				status: 404
@@ -53,10 +38,7 @@ export const DELETE: RequestHandler = async ({ params }) => {
 		}
 		
 		// Delete the category
-		const result = await categoriesCollection.deleteOne({ _id: objectId });
-		
-		// Close connection
-		await client.close();
+		const result = await DatabaseService.deleteOne('categories', { _id: objectId });
 		
 		if (result.deletedCount === 0) {
 			return json({

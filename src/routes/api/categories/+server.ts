@@ -1,31 +1,13 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 export const GET: RequestHandler = async () => {
 	try {
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const categoriesCollection = db.collection('categories');
-		
 		// Get all categories
-		const categories = await categoriesCollection
-			.find({})
-			.sort({ name: 1 }) // Sort by name alphabetically
-			.toArray();
-		
-		// Close connection
-		await client.close();
+		const categories = await DatabaseService.find('categories', {}, {
+			sort: { name: 1 } // Sort by name alphabetically
+		});
 		
 		return json({
 			data: categories.map(category => ({
@@ -71,26 +53,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 400 });
 		}
 		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const categoriesCollection = db.collection('categories');
-		
 		// Check if category already exists
-		const existingCategory = await categoriesCollection.findOne({ 
+		const existingCategory = await DatabaseService.findOne('categories', { 
 			name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
 		});
 		
 		if (existingCategory) {
-			await client.close();
 			return json({
 				error: 'Category with this name already exists',
 				status: 409
@@ -105,10 +73,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 		
 		// Insert into database
-		const result = await categoriesCollection.insertOne(newCategory);
-		
-		// Close connection
-		await client.close();
+		const result = await DatabaseService.insertOne('categories', newCategory);
 		
 		// Return the created category
 		return json({

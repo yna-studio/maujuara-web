@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 import { TelegramAPI } from '../../../lib/api/telegram';
 import { uploadCompetitionPoster } from '../../../lib/utils/cloudinary';
 
@@ -52,20 +52,7 @@ interface GetCompetitionsParams {
 async function getCompetitions(params: GetCompetitionsParams) {
 	const { search, id_organizer, id_category, status, tag, limit, page } = params;
 
-	// Get MongoDB connection
-	const uri = getMongoUri();
-
-	const client = new MongoClient(uri, {
-		serverSelectionTimeoutMS: 10000,
-		connectTimeoutMS: 10000
-	} as MongoClientOptions);
-
 	try {
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const competitionsCollection = db.collection('competitions');
-
 		// Build query
 		const query: Record<string, any> = {};
 
@@ -114,88 +101,86 @@ async function getCompetitions(params: GetCompetitionsParams) {
 		const skip = (page - 1) * limit;
 
 		// Execute query with pagination and organizer lookup
-		const competitions = await competitionsCollection
-			.aggregate([
-				{ $match: query },
-				{
-					$lookup: {
-						from: 'organizers',
-						localField: 'organizer',
-						foreignField: '_id',
-						as: 'organizerInfo'
-					}
-				},
-				{ $unwind: '$organizerInfo' },
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'category',
-						foreignField: '_id',
-						as: 'categoryInfo'
-					}
-				},
-				{
-					$addFields: {
-						status: {
-							$cond: {
-								if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
-								then: 'open',
-								else: {
-									$cond: {
-										if: {
-											$and: [
-												{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
-												{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
-											]
-										},
-										then: 'progress',
-										else: 'ended'
-									}
+		const competitions = await DatabaseService.aggregate('competitions', [
+			{ $match: query },
+			{
+				$lookup: {
+					from: 'organizers',
+					localField: 'organizer',
+					foreignField: '_id',
+					as: 'organizerInfo'
+				}
+			},
+			{ $unwind: '$organizerInfo' },
+			{
+				$lookup: {
+					from: 'categories',
+					localField: 'category',
+					foreignField: '_id',
+					as: 'categoryInfo'
+				}
+			},
+			{
+				$addFields: {
+					status: {
+						$cond: {
+							if: { $lt: [new Date(), { $toDate: '$deadline_date' }] },
+							then: 'open',
+							else: {
+								$cond: {
+									if: {
+										$and: [
+											{ $gte: [new Date(), { $toDate: '$deadline_date' }] },
+											{ $lte: [new Date(), { $toDate: '$announcement_date' }] }
+										]
+									},
+									then: 'progress',
+									else: 'ended'
 								}
 							}
-						},
-						category: {
-							$arrayElemAt: ['$categoryInfo', 0]
 						}
+					},
+					category: {
+						$arrayElemAt: ['$categoryInfo', 0]
 					}
-				},
-				{
-					$project: {
-						_id: 1,
-						title: 1,
-						poster: 1,
-						deadline_date: 1,
-						announcement_date: 1,
-						created_date: 1,
-						updated_date: 1,
-						views: 1,
-						prize_desc: 1,
-						prize_estimate: 1,
-						desc: 1,
-						contacts: 1,
-						link_join: 1,
-						link_source: 1,
-						tags: 1,
-						status: 1,
-						category: {
-							id: { $toString: '$category._id' },
-							name: '$category.name'
-						},
-						organizer: {
-							id: { $toString: '$organizerInfo._id' },
-							name: '$organizerInfo.name',
-							avatar: '$organizerInfo.avatar'
-						}
+				}
+			},
+			{
+				$project: {
+					_id: 1,
+					title: 1,
+					poster: 1,
+					deadline_date: 1,
+					announcement_date: 1,
+					created_date: 1,
+					updated_date: 1,
+					views: 1,
+					prize_desc: 1,
+					prize_estimate: 1,
+					desc: 1,
+					contacts: 1,
+					link_join: 1,
+					link_source: 1,
+					tags: 1,
+					status: 1,
+					category: {
+						id: { $toString: '$category._id' },
+						name: '$category.name'
+					},
+					organizer: {
+						id: { $toString: '$organizerInfo._id' },
+						name: '$organizerInfo.name',
+						avatar: '$organizerInfo.avatar'
 					}
-				},
-				{ $sort: { updated_date: -1 } },
-				{ $skip: skip },
-				{ $limit: limit }
-			])
-			.toArray();
+				}
+			},
+			{ $sort: { updated_date: -1 } },
+			{ $skip: skip },
+			{ $limit: limit }
+		]);
 
 		// Get total count for pagination info
-		const totalCount = await competitionsCollection.countDocuments(query);
+		const totalCount = await DatabaseService.count('competitions', query);
 
 		// Calculate pagination info
 		const totalPages = Math.ceil(totalCount / limit);
@@ -207,8 +192,9 @@ async function getCompetitions(params: GetCompetitionsParams) {
 			totalPages,
 			totalCount
 		};
-	} finally {
-		await client.close();
+	} catch (error) {
+		console.error('Failed to fetch competitions:', error);
+		throw error;
 	}
 }
 
@@ -426,24 +412,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 400 });
 		}
 
-		// Get MongoDB connection
-		const uri = getMongoUri();
-
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const competitionsCollection = db.collection('competitions');
-		const organizersCollection = db.collection('organizers');
-
 		// Verify organizer exists
-		const organizerExists = await organizersCollection.findOne({ _id: new ObjectId(organizer) });
+		const organizerExists = await DatabaseService.findOne('organizers', { _id: new ObjectId(organizer) });
 		if (!organizerExists) {
-			await client.close();
 			return json({
 				error: 'Organizer not found',
 				status: 400
@@ -491,25 +462,24 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 
 		// Insert into database
-		const result = await competitionsCollection.insertOne(newCompetition);
+		const result = await DatabaseService.insertOne('competitions', newCompetition);
 
 		// Handle tags collection - update or insert tags
 		if (tags && tags.length > 0) {
-			const tagsCollection = db.collection('tags');
-
 			for (const tagName of tags) {
 				if (tagName.trim()) {
 					const trimmedTag = tagName.trim().toLowerCase();
 
 					// Try to update existing tag first
-					const updateResult = await tagsCollection.updateOne(
+					const updateResult = await DatabaseService.updateOne(
+						'tags',
 						{ name: trimmedTag },
 						{ $inc: { total: 1 } }
 					);
 
 					// If tag doesn't exist, insert it with total = 1
 					if (updateResult.matchedCount === 0) {
-						await tagsCollection.insertOne({
+						await DatabaseService.insertOne('tags', {
 							name: trimmedTag,
 							total: 1,
 							created_at: currentTime,
@@ -517,7 +487,8 @@ export const POST: RequestHandler = async ({ request }) => {
 						});
 					} else {
 						// Update the updated_at field for existing tag
-						await tagsCollection.updateOne(
+						await DatabaseService.updateOne(
+							'tags',
 							{ name: trimmedTag },
 							{ $set: { updated_at: currentTime } }
 						);
@@ -527,13 +498,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Update organizer's updated_at field
-		await organizersCollection.updateOne(
+		await DatabaseService.updateOne(
+			'organizers',
 			{ _id: new ObjectId(organizer) },
 			{ $set: { updated_at: currentTime } }
 		);
-
-		// Close connection
-		await client.close();
 
 		// Send Telegram notification after successful creation
 		try {

@@ -1,6 +1,6 @@
-import { MongoClient, type MongoClientOptions } from 'mongodb';
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { withDatabase } from '$lib/server/mongodb';
 
 export async function GET() {
 	try {
@@ -14,27 +14,11 @@ export async function GET() {
 			}, { status: 500 });
 		}
 		
-		const strippedHost = MONGODB_HOST.replace(/^mongodb\+srv:\/\//, '');
-		const uri = `mongodb+srv://${encodeURIComponent(MONGODB_USER)}:${encodeURIComponent(MONGODB_PASSWORD)}@${strippedHost}`;
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000, // 10 seconds timeout
-			connectTimeoutMS: 10000 // 10 seconds connection timeout
-		} as MongoClientOptions);
-		
-		// Test the connection with timeout
-		const connectionPromise = client.connect();
-		const pingPromise = connectionPromise.then(() => 
-			client.db('admin').command({ ping: 1 })
-		);
-		
-		// Set timeout for the entire operation
-		const timeoutPromise = new Promise((_, reject) => {
-			setTimeout(() => reject(new Error('Database connection timeout after 10 seconds')), 10000);
+		// Test database connection with timeout
+		await withDatabase(async (db) => {
+			// Test database ping
+			await db.admin().command({ ping: 1 });
 		});
-		
-		await Promise.race([pingPromise, timeoutPromise]);
-		await client.close();
 		
 		return json({
 			status: 'success',

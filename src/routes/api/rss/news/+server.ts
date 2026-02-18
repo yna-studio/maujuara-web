@@ -1,140 +1,122 @@
 import type { RequestHandler } from './$types';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 
 export const GET: RequestHandler = async ({ url }) => {
-	let client;
 	try {
 		// Get base URL from request
 		const baseUrl = url.origin;
-		const uri = getMongoUri();
-		
-		// Create MongoDB client
-		client = new MongoClient(uri, {
-			maxPoolSize: 10,
-			serverSelectionTimeoutMS: 5000,
-			socketTimeoutMS: 45000,
-		});
-
-		// Connect to database
-		await client.connect();
-		const db = client.db('maujuara');
-		const newsCollection = db.collection('news');
-		const usersCollection = db.collection('users');
 
 		// Fetch all news with user data, no limit for SEO
-		const news = await newsCollection
-			.aggregate([
-				{
-					$match: {
-						status: 'published'
-					}
-				},
-				{
-					$lookup: {
-						from: 'users',
-						localField: 'created_by',
-						foreignField: '_id',
-						as: 'user'
-					}
-				},
-				{
-					$unwind: {
-						path: '$user',
-						preserveNullAndEmptyArrays: true
-					}
-				},
-				{
-					$project: {
-						title: 1,
-						content: 1,
-						thumbnail: 1,
-						tags: 1,
-						created_at: 1,
-						updated_at: 1,
-						createdBy: {
-							$cond: {
-								if: { $ne: ['$user', null] },
-								then: {
-									id: { $toString: '$user._id' },
-									name: '$user.name',
-									avatar: '$user.avatar'
-								},
-								else: null
-							}
-						},
-						shortDesc: {
-							$let: {
-								vars: {
-									strippedContent: {
-										$reduce: {
-											input: {
-												$split: [
-													{
-														$replaceAll: {
-															input: '$content',
-															find: '<[^>]*>',
-															replacement: ''
-														}
-													},
-													'\n'
-												]
-											},
-											initialValue: '',
-											in: {
-												$concat: ['$$value', '$$this']
-											}
+		const news = await DatabaseService.aggregate('news', [
+			{
+				$match: {
+					status: 'published'
+				}
+			},
+			{
+				$lookup: {
+					from: 'users',
+					localField: 'created_by',
+					foreignField: '_id',
+					as: 'user'
+				}
+			},
+			{
+				$unwind: {
+					path: '$user',
+					preserveNullAndEmptyArrays: true
+				}
+			},
+			{
+				$project: {
+					title: 1,
+					content: 1,
+					thumbnail: 1,
+					tags: 1,
+					created_at: 1,
+					updated_at: 1,
+					createdBy: {
+						$cond: {
+							if: { $ne: ['$user', null] },
+							then: {
+								id: { $toString: '$user._id' },
+								name: '$user.name',
+								avatar: '$user.avatar'
+							},
+							else: null
+						}
+					},
+					shortDesc: {
+						$let: {
+							vars: {
+								strippedContent: {
+									$reduce: {
+										input: {
+											$split: [
+												{
+													$replaceAll: {
+														input: '$content',
+														find: '<[^>]*>',
+														replacement: ''
+													}
+												},
+												'\n'
+											]
+										},
+										initialValue: '',
+										in: {
+											$concat: ['$$value', '$$this']
 										}
 									}
-								},
-								in: {
-									$cond: {
-										if: {
-											$gt: [
-												{
-													$strLenCP: {
+								}
+							},
+							in: {
+								$cond: {
+									if: {
+										$gt: [
+											{
+												$strLenCP: {
+													$trim: {
+														input: '$$strippedContent'
+													}
+												}
+											},
+											150
+										]
+									},
+									then: {
+										$concat: [
+											{
+												$substrCP: [
+													{
 														$trim: {
 															input: '$$strippedContent'
 														}
-													}
-												},
-												150
-											]
-										},
-										then: {
-											$concat: [
-												{
-													$substrCP: [
-														{
-															$trim: {
-																input: '$$strippedContent'
-															}
-														},
-														0,
-														147
-													]
-												},
-												'...'
-											]
-										},
-										else: {
-											$trim: {
-												input: '$$strippedContent'
-											}
+													},
+													0,
+													147
+												]
+											},
+											'...'
+										]
+									},
+									else: {
+										$trim: {
+											input: '$$strippedContent'
 										}
 									}
 								}
 							}
 						}
 					}
-				},
-				{
-					$sort: {
-						updated_at: -1
-					}
 				}
-			])
-			.toArray();
+			},
+			{
+				$sort: {
+					updated_at: -1
+				}
+			}
+		]);
 
 		// Generate RSS XML
 		const rssItems = news.map((item: any) => {
@@ -183,10 +165,5 @@ export const GET: RequestHandler = async ({ url }) => {
 	} catch (error) {
 		console.error('Error generating RSS feed:', error);
 		return new Response('Error generating RSS feed', { status: 500 });
-	} finally {
-		// Close MongoDB connection
-		if (client) {
-			client.close();
-		}
 	}
 };

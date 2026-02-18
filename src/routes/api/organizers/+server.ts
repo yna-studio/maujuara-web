@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions } from 'mongodb';
-import { getMongoUri } from '../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
 import { uploadOrganizerAvatar } from '../../../lib/utils/cloudinary';
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -34,19 +33,6 @@ export const GET: RequestHandler = async ({ url }) => {
 			}, { status: 400 });
 		}
 		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const organizersCollection = db.collection('organizers');
-		
 		// Build query
 		const query: Record<string, any> = {};
 		
@@ -56,31 +42,25 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 		
 		const sort: Record<string, 1 | -1> = {};
-sort[orderByField!] = -1; // Sort by specified field in descending order
+		sort[orderByField!] = -1; // Sort by specified field in descending order
 		
 		// Execute query with pagination
 		const skip = (page - 1) * limit;
 		
 		// Get total count for pagination metadata
-		const totalCount = await organizersCollection.countDocuments(query);
+		const totalCount = await DatabaseService.count('organizers', query);
 		
-		const organizers = await organizersCollection
-			.find(query)
-			.sort(sort)
-			.skip(skip)
-			.limit(limit)
-			.toArray();
+		const organizers = await DatabaseService.find('organizers', query, {
+			sort,
+			skip,
+			limit
+		});
 		
-		// Debug: log the results and collection info
+		// Debug: log the results
 		console.log('Organizers query results:', organizers.length, 'documents');
-		console.log('Collection name:', organizersCollection.collectionName);
-		console.log('Database name:', db.databaseName);
 		if (organizers.length > 0) {
 			console.log('Sample document:', JSON.stringify(organizers[0], null, 2));
 		}
-		
-		// Close connection
-		await client.close();
 		
 		return json({
 			data: organizers,
@@ -151,19 +131,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			}, { status: 500 });
 		}
 		
-		// Get MongoDB connection
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		// Connect to database
-		await client.connect();
-		const db = client.db();
-		const organizersCollection = db.collection('organizers');
-		
 		// Create new organizer document
 		const currentTime = new Date().toISOString();
 		const newOrganizer = {
@@ -174,12 +141,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 		
 		// Insert into database
-		const result = await organizersCollection.insertOne(newOrganizer);
+		const result = await DatabaseService.insertOne('organizers', newOrganizer);
 		
-		// Close connection
-		await client.close();
-		
-		// Return the created organizer with its ID
+		// Return created organizer with its ID
 		return json({
 			data: {
 				_id: result.insertedId.toString(),

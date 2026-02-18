@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { MongoClient, type MongoClientOptions, ObjectId } from 'mongodb';
-import { getMongoUri } from '../../../../configs/mongodb';
+import { DatabaseService } from '$lib/server/database';
+import { ObjectId } from 'mongodb';
 import { uploadOrganizerAvatar } from '../../../../lib/utils/cloudinary';
 
 // GET single organizer by ID
@@ -16,28 +16,15 @@ export const GET: RequestHandler = async ({ params }) => {
 			}, { status: 400 });
 		}
 		
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		await client.connect();
-		const db = client.db();
-		const organizersCollection = db.collection('organizers');
-		
 		// Try to convert to ObjectId, fallback to string if invalid
 		let organizer;
 		try {
 			const objectId = new ObjectId(id);
-			organizer = await organizersCollection.findOne({ _id: objectId });
+			organizer = await DatabaseService.findOne('organizers', { _id: objectId });
 		} catch {
 			// If invalid ObjectId, try string ID using proper query syntax
-			organizer = await organizersCollection.findOne({ _id: id as any });
+			organizer = await DatabaseService.findOne('organizers', { _id: id as any });
 		}
-		
-		await client.close();
 		
 		if (!organizer) {
 			return json({
@@ -109,17 +96,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 		
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		await client.connect();
-		const db = client.db();
-		const organizersCollection = db.collection('organizers');
-		
 		// Update organizer
 		const updateData = {
 			name: name.trim(),
@@ -130,19 +106,19 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		let result;
 		try {
 			const objectId = new ObjectId(id);
-			result = await organizersCollection.updateOne(
+			result = await DatabaseService.updateOne(
+				'organizers',
 				{ _id: objectId },
 				{ $set: updateData }
 			);
 		} catch {
 			// If invalid ObjectId, try string ID using proper query syntax
-			result = await organizersCollection.updateOne(
+			result = await DatabaseService.updateOne(
+				'organizers',
 				{ _id: id as any },
 				{ $set: updateData }
 			);
 		}
-		
-		await client.close();
 		
 		if (result.matchedCount === 0) {
 			return json({
@@ -183,27 +159,14 @@ export const DELETE: RequestHandler = async ({ params }) => {
 			}, { status: 400 });
 		}
 		
-		const uri = getMongoUri();
-		
-		const client = new MongoClient(uri, {
-			serverSelectionTimeoutMS: 10000,
-			connectTimeoutMS: 10000
-		} as MongoClientOptions);
-		
-		await client.connect();
-		const db = client.db();
-		const organizersCollection = db.collection('organizers');
-		
 		let result;
 		try {
 			const objectId = new ObjectId(id);
-			result = await organizersCollection.deleteOne({ _id: objectId });
+			result = await DatabaseService.deleteOne('organizers', { _id: objectId });
 		} catch {
 			// If invalid ObjectId, try string ID using proper query syntax
-			result = await organizersCollection.deleteOne({ _id: id as any });
+			result = await DatabaseService.deleteOne('organizers', { _id: id as any });
 		}
-		
-		await client.close();
 		
 		if (result.deletedCount === 0) {
 			return json({
