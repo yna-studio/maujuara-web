@@ -73,7 +73,7 @@ async function getCompetitions(params: GetCompetitionsParams) {
 
 		// Add tag filter
 		if (tag) {
-			query.tags = { $in: [tag.trim().toLowerCase()] };
+			query.tags = { $regex: `^${tag.trim()}$`, $options: 'i' };
 		}
 
 		// Add status filter based on dates
