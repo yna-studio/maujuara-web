@@ -157,6 +157,21 @@
 			</a>
 		</div>
 
+		<!-- seedbacklink badge -->
+		<div class="flex justify-center py-3">
+			<div style="width: 80px">
+				<a href="https://id.seedbacklink.com/">
+					<img
+						title="seedbacklink"
+						src="https://id.seedbacklink.com/wp-content/uploads/2025/04/badge-seedbacklink-media.png"
+						alt="seedbacklink"
+						width="100%"
+						height="auto"
+					/></a
+				>
+			</div>
+		</div>
+
 		<!-- Copyright -->
 		<p class="text-center text-sm text-gray-600">
 			© {new Date().getFullYear()} Y&A Studio - All right reserved
