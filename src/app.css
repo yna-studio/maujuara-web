@@ -128,4 +128,26 @@ ol {
 	color: #b10606 !important;
 	text-decoration: none;
 }
+
+.competition-description h2 {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin: 1.25rem 0 1rem 0;
+	color: #111827;
+}
+
+.competition-description h3 {
+	font-size: 1rem !important;
+	font-weight: 600;
+	margin: 1rem 0 0.75rem 0;
+	color: #111827;
+}
+
+.competition-description h4 {
+	font-size: 0.8rem;
+	font-weight: 600;
+	margin: 1rem 0 0.5rem 0;
+	color: #111827;
+}
+
 /* end ofcompetition detail style */

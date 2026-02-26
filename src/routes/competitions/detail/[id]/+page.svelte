@@ -500,6 +500,7 @@
                             {@html competition.desc ||
                                 "<p>Tidak ada deskripsi tersedia.</p>"}
                         </div>
+                      
                     </section>
 
                     <!-- Tags Section -->
@@ -947,28 +948,6 @@
 
 <style>
     /* Custom styles for competition description */
-
-    .competition-description h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 1.5rem 0 1rem 0;
-        color: #111827;
-    }
-
-    .competition-description h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin: 1.25rem 0 0.75rem 0;
-        color: #111827;
-    }
-
-    .competition-description h4 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin: 1rem 0 0.5rem 0;
-        color: #111827;
-    }
-
     .competition-description p {
         font-size: 0.875rem;
         line-height: 1.6;
