@@ -190,8 +190,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
-		<title>Maujuara - News & Competitions Feed</title>
-		<description>Latest news and competitions from Maujuara</description>
+		<title>MauJuara - News and Competitions Feed</title>
+		<description>Latest news and competitions from MauJuara</description>
 		<link>${baseUrl}</link>
 		<atom:link href="${baseUrl}/api/rss" rel="self" type="application/rss+xml" />
 		<language>id-ID</language>
